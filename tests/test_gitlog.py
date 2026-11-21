@@ -199,7 +199,7 @@ def test_an_empty_or_enormous_subject_is_readable_in_every_output(tmp_path):
         tmp_path / "r",
         [
             ("2026-03-09T09:00:00+00:00", "", {"a.py": lines(1)}),
-            ("2026-03-09T10:00:00+00:00", "x" * 50_000, {"b.py": lines(1)}),
+            ("2026-03-09T10:00:00+00:00", "x" * 5_000, {"b.py": lines(1)}),
         ],
     )
 

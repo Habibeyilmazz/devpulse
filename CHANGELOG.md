@@ -25,7 +25,7 @@ All notable changes to this project are documented here. The format follows
   - A config file saved by Windows Notepad (UTF-8 with a byte order mark) failed with
     "Invalid statement"; it now loads, and a file that is not UTF-8 is named in the error.
   - A commit with an empty message printed as a blank bullet; it now reads "(no message)". A commit
-    subject of 100,000 characters went whole into the note, the dashboard, standup and the AI prompt;
+    subject of 100,000 characters (5,000 in the test: Windows caps a command line) went whole into the note, the dashboard, standup and the AI prompt;
     subjects are cut at 300 characters.
   - `--author ""` matched every commit; it is now a usage error.
   Known and left: two empty commits with the same subject in the same second count once (the
