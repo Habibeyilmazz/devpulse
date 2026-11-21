@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from rich.console import Console
@@ -12,6 +13,20 @@ from devpulse.gitlog import Commit
 from devpulse.stats import Report, facts, fmt_day
 
 BLOCKS = "·▁▂▃▄▅▆▇█"  # a dot keeps an empty hour or day in its place on the axis
+
+
+class NoTrailingSpaces:
+    """A stream that drops the spaces rich pads table rows with, so `> file` and `| pbcopy` stay clean."""
+
+    def __init__(self, stream):
+        self.stream = stream
+
+    def write(self, text: str) -> int:
+        # rich writes whole lines per print, so a line never spans two writes
+        return self.stream.write(re.sub(r" +\n", "\n", text))
+
+    def __getattr__(self, name):
+        return getattr(self.stream, name)
 
 
 def spark(values: list[int]) -> str:

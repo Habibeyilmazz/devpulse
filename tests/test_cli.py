@@ -39,6 +39,7 @@ def test_week_writes_note_and_dashboard(tmp_path, capsys):
     printed = capsys.readouterr()
     assert printed.err == ""
     assert "Week 11, 2026" in printed.out and "Tidy README" in printed.out
+    assert not [line for line in printed.out.splitlines() if line.endswith(" ")]  # rich pads table rows
     md = (out / "vault" / "devpulse-2026-W11.md").read_text(encoding="utf-8")
     assert "commits: 4" in md and "### [[api]]" in md and "### [[web]]" in md
     assert "Bob's refactor" not in md and "Add health endpoint" not in md

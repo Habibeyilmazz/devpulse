@@ -16,7 +16,7 @@ from rich.console import Console
 from devpulse import __version__, ai, config, dashboard, export, note
 from devpulse.gitlog import Commit, configured_author, enclosing_repo, find_repos, read_commits, repo_names
 from devpulse.stats import build_report, period_for, window_start
-from devpulse.terminal import print_report, print_standup
+from devpulse.terminal import NoTrailingSpaces, print_report, print_standup
 
 
 class UsageError(Exception):
@@ -247,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
         # A pipe on Windows (Git Bash, `> file`) gets the legacy code page, which has no sparkline blocks.
         if hasattr(stream, "reconfigure") and "utf" not in (stream.encoding or "").lower():
             stream.reconfigure(encoding="utf-8")
-    console = Console()
+    console = Console(file=NoTrailingSpaces(sys.stdout), highlight=False)  # no stray cyan on numbers
     try:
         return run_standup(args, console) if args.command == "standup" else run_review(args, console)
     except UsageError as e:
