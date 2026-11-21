@@ -1,3 +1,4 @@
+import os
 from datetime import date
 
 from conftest import ADA, BOB, commit, git, lines, make_repo
@@ -129,7 +130,8 @@ def test_empty_repo_and_unicode_paths(tmp_path, capsys):
     assert read_commits(empty, "empty", [ADA[1]], SINCE) == []
     assert capsys.readouterr().err == ""
 
-    odd = 'ta\tb "quoted".py'  # git would quote and escape this path without -z
+    # git would quote and escape this path without -z; Windows does not allow such a file name at all
+    odd = 'ta\tb "quoted".py' if os.name != "nt" else "spa ce.py"
     files = {"docs/café notes.md": lines(3), f"src/{odd}": lines(2), f"vendor/{odd}": lines(9)}
     repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "Añade café ☕", files)])
     commit(repo, "2026-03-09T11:00:00+00:00", "nothing changed", {})
