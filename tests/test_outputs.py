@@ -55,6 +55,7 @@ def test_dashboard_is_self_contained_and_escapes_everything():
     assert not re.search(r"""(?:src|href)\s*=|url\(|@import|https?://|fetch\(|XMLHttpRequest""", page)
     assert page.count("<script>") == 1
     assert 'data-tip="Mon 09:00–09:59 · 2 commits"' in page
+    assert '<td class="n">09:00</td><td class="n">2</td>' in page  # the heatmap's hours are also a table
     assert "Week 11, 2026" in page and "9 Mar – 15 Mar 2026" in page
 
 
@@ -69,6 +70,15 @@ def test_dashboard_renders_every_period_kind_and_the_empty_case():
     page = dashboard.render(empty, MON)
     assert "No commits in this period" in page and "4 repos" in page and "in this week (9 Mar – 15 Mar 2026)" in page
     assert "devpulse week --last" in page and 'class="figure"' not in page  # what to try next, and no big zero
+
+
+def test_dashboard_for_a_quiet_period_still_shows_the_trend_and_the_searched_identity():
+    quiet = build_report([c("2026-03-03 10:00")], period_for("week", MON), MON, repos_scanned=1)
+    quiet.authors = ["ada@example.com"]
+    page = dashboard.render(quiet, MON)
+    assert "read 1 repo and found no commits by ada@example.com" in page
+    assert "Week over week" in page and "Week 10, 2026 · 1 commit" in page
+    assert "When you commit" not in page
 
 
 def test_heat_levels():

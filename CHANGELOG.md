@@ -52,8 +52,9 @@ eleven projects, a repo name and a commit subject that do not fit).
 - Dashboard contrast: the grey bars of earlier periods are 3:1 against the card, the first step of
   the dark heatmap ramp can be told from an empty cell, and small grey labels pass 4.5:1 in light mode.
 - Dashboard for assistive technology: charts of up to twelve bars read their values out, the heatmap
-  names the busiest weekday and hour, the scrolling per-day table can be focused, and the charts keep
-  their colours in Windows high-contrast mode and in print.
+  names the busiest weekday and hour, commits per hour join commits per day as a table that can be
+  focused and scrolled with the keyboard, and the charts keep their colours in Windows high-contrast
+  mode and in print.
 - Terminal sparklines mark an hour or day without commits with a dot, so the bars keep their place:
   `········▅▆█▆▂·▂▃▂▅▂·▃▂··` instead of blanks.
 - A malformed `--date` says `'22.11.2026' is not a date; write it as YYYY-MM-DD` instead of
@@ -109,7 +110,7 @@ First release.
 - The dashboard was checked by eye and with Playwright scripts (overflow at ten widths, Tab order,
   hover tooltip, forced colours, print media). It has not been run through axe or Lighthouse, and not
   through a real screen reader. Hover tooltips on single heatmap cells have no keyboard equivalent; the
-  per-day numbers are in the table at the bottom, the per-hour numbers are not available as text.
+  per-day and per-hour totals are in the tables at the bottom, the weekday-by-hour split is not.
 - The README screenshots are cut from reports of `scripts/demo_repos.py` output with Playwright
   (1040 px wide for the desktop shots, 390 px for the phone shots, both at 2x). Retake them when the
   dashboard changes.

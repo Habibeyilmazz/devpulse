@@ -267,13 +267,19 @@ def _shipped(r: Report) -> str:
     return "".join(out)
 
 
-def _day_table(r: Report) -> str:
-    rows = "".join(f'<tr><td class="n">{d.isoformat()}</td><td class="n">{n}</td></tr>' for d, n in r.per_day.items())
-    return (
-        "<details><summary>Commits per day as a table</summary>"
-        f'<div class="scroll" tabindex="0" role="group" aria-label="Commits per day">'
-        f"<table><tr><th>Date</th><th>Commits</th></tr>{rows}</table></div></details>"
-    )
+def _tables(r: Report) -> str:
+    """The charts' numbers as text, for a screen reader, a keyboard or a copy and paste."""
+    per_day = [(d.isoformat(), n) for d, n in r.per_day.items()]
+    per_hour = [(f"{h:02d}:00", sum(row[h] for row in r.heat)) for h in range(24)]
+    out = []
+    for unit, rows in (("day", per_day), ("hour", per_hour)):
+        body = "".join(f'<tr><td class="n">{x}</td><td class="n">{n}</td></tr>' for x, n in rows)
+        out.append(
+            f"<details><summary>Commits per {unit} as a table</summary>"
+            f'<div class="scroll" tabindex="0" role="group" aria-label="Commits per {unit}">'
+            f"<table><tr><th>{'Date' if unit == 'day' else 'Hour'}</th><th>Commits</th></tr>{body}</table></div></details>"
+        )
+    return "".join(out)
 
 
 def _wrapped(r: Report) -> str:
@@ -392,7 +398,7 @@ def render(r: Report, generated: date) -> str:
                 f"First to last commit of a run with no gap over {SESSION_GAP_MIN} minutes. The length adds {SESSION_LEAD_MIN} minutes for the work before the first commit: an estimate, not a time sheet.",
                 _sessions(r),
             ),
-            _card("", "What shipped", "Commit subjects per project, newest first.", _shipped(r) + _day_table(r)),
+            _card("", "What shipped", "Commit subjects per project, newest first.", _shipped(r) + _tables(r)),
         ]
     return (
         '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'

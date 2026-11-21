@@ -161,7 +161,7 @@ On a phone the same file is one column, and the year calendar splits into two ha
   <img src="docs/screenshots/phone-week-dark.png" width="300" alt="Weekly dashboard on a phone in dark mode: 28 commits, the tiles, the weekday-by-hour heatmap and commits per day">
 </p>
 
-The charts are not the only way in: every chart has a text description for screen readers, the commits per day are also a table, the project lists open with the keyboard, and the colours survive print and Windows high-contrast mode. A period without commits gets a page that says what was searched and what to try next.
+The charts are not the only way in: every chart has a text description for screen readers, commits per day and per hour are also tables, the project lists open with the keyboard, and the colours survive print and Windows high-contrast mode. A period without commits gets a page that says what was searched and what to try next.
 
 ## What it measures
 
