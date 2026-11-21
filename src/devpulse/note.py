@@ -15,6 +15,12 @@ def wikilink(name: str) -> str:
     return "[[" + re.sub(r"[\[\]|#^]", "-", name) + "]]"
 
 
+def inert(text: str) -> str:
+    """Commit or AI text with `<`, `[`, `]` and `\\` escaped, so it cannot pull in a remote image (`![](url)`,
+    `<img>`), embed a vault file (`![[x]]`), start a wikilink or hide a link behind other words."""
+    return re.sub(r"([\\<\[\]])", r"\\\1", text)
+
+
 def render(r: Report) -> str:
     p = r.period
     frontmatter = {
@@ -35,7 +41,7 @@ def render(r: Report) -> str:
     out = ["---", *(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in frontmatter.items()), "---", ""]
     out += [f"# What I shipped: {p.title}", "", f"{p.span} · previous: [[devpulse-{p.previous().label}]]", ""]
     if r.narrative:
-        out += ["## Summary", "", r.narrative, ""]
+        out += ["## Summary", "", inert(r.narrative), ""]
     out += ["## Highlights", "", *(f"- **{k}:** {v}" for k, v in facts(r)), ""]
     out += ["## Projects", ""]
     if not r.projects:
@@ -49,10 +55,10 @@ def render(r: Report) -> str:
             "",
         ]
         subjects = list(dict.fromkeys(c.subject for c in reversed(proj.commits)))  # newest first, no repeats
-        out += [f"- {s}" for s in subjects[:MAX_SUBJECTS]]
+        out += [f"- {inert(s)}" for s in subjects[:MAX_SUBJECTS]]
         if len(subjects) > MAX_SUBJECTS:
             out.append(f"- … and {len(subjects) - MAX_SUBJECTS} more")
         out.append("")
     if r.improve:
-        out += [f"## One thing for next {p.kind}", "", f"- [ ] {r.improve}", ""]
+        out += [f"## One thing for next {p.kind}", "", f"- [ ] {inert(r.improve)}", ""]
     return "\n".join(out)

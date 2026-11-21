@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Round 12: the Markdown note put commit subjects, the AI narrative and the "one thing" in raw, so a
+  subject like `![](https://host/pixel.png)` or `<img src=...>` made Obsidian load a remote image when the
+  note was opened, and `![[file]]` embedded a vault file (gap reported in round 11). `<`, `[`, `]` and `\`
+  in that text are now backslash-escaped (`note.inert`); devpulse's own wikilinks are untouched.
+
 ### Security
 
 Second security pass (round 11). Re-read every module and the workflow, probed the CLI with hostile

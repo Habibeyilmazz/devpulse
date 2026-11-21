@@ -189,3 +189,16 @@ def test_dashboard_policy_allows_only_its_own_script_and_no_requests():
     script = re.search(r"<script>(.*?)</script>", page, re.S).group(1)
     digest = base64.b64encode(hashlib.sha256(script.encode()).digest()).decode()
     assert f"script-src 'sha256-{digest}'" in policy  # a changed script without a new hash would stop working
+
+
+def test_note_keeps_commit_and_ai_text_inert():
+    hostile = r"![p](https://x.test/p.png) <img src=https://x.test/i> ![[secret]] [[link]] \[x\]"
+    r = report(extra=[c("2026-03-11 10:00", subject=hostile)])
+    r.narrative, r.improve = "See ![](https://x.test/n.png)", "<b>Ship</b>"
+
+    text = note.render(r)
+
+    assert r"- !\[p\](https://x.test/p.png) \<img src=https://x.test/i> !\[\[secret\]\] \[\[link\]\] \\\[x\\\]" in text
+    assert "See !\\[\\](https://x.test/n.png)" in text
+    assert "- [ ] \\<b>Ship\\</b>" in text
+    assert "previous: [[devpulse-2026-W10]]" in text  # devpulse's own links stay links

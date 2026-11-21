@@ -147,7 +147,7 @@ tags: ["devpulse", "weekly-review"]
   ...
 ```
 
-Each project is a wikilink, so the note joins whatever project pages you already keep, and every note links to the one before it. The frontmatter numbers are there for Dataview or Bases queries.
+Each project is a wikilink, so the note joins whatever project pages you already keep, and every note links to the one before it. The frontmatter numbers are there for Dataview or Bases queries. Commit subjects and the AI text go in with `<`, `[`, `]` and `\` escaped, so a subject such as `![](https://...)` shows as text instead of loading an image or making a link.
 
 ### As a dashboard
 
