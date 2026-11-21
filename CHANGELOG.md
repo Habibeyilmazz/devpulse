@@ -17,6 +17,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Round 13 (tests): tried to break the CLI (empty, binary-heavy and 200 KB-subject commits, unicode, three
+  timezones, case-different emails, four parallel runs, bad/odd paths, `--ai` with no/bad key, unwritable
+  outputs). Found no bugs; added a regression test. A path starting with `-` works as `./-name`.
 - Round 12: the Markdown note put commit subjects, the AI narrative and the "one thing" in raw, so a
   subject like `![](https://host/pixel.png)` or `<img src=...>` made Obsidian load a remote image when the
   note was opened, and `![[file]]` embedded a vault file (gap reported in round 11). `<`, `[`, `]` and `\`

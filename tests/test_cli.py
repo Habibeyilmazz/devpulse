@@ -328,3 +328,11 @@ def test_written_paths_are_printed_as_they_are(tmp_path, capsys):
     assert cli.main(["week", str(root), "--date", "2026-03-10", "--md", str(out)]) == 0
     file = out / "devpulse-2026-W11.md"
     assert file.exists() and f"Markdown note  {file}" in capsys.readouterr().out
+
+
+def test_dash_named_folder_and_unicode_subject(tmp_path, capsys, monkeypatch):
+    make_repo(tmp_path / "-odd" / "r", [("2026-03-10T09:00:00+01:00", "héllo 日本語 😀", {"a.py": lines(3)})])
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["week", "./-odd", "--date", "2026-03-10", "--md", str(tmp_path / "v")]) == 0
+    assert "héllo 日本語 😀" in capsys.readouterr().out
+    assert "héllo 日本語 😀" in next((tmp_path / "v").glob("*.md")).read_text(encoding="utf-8")
