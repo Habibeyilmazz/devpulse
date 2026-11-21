@@ -8,6 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- First-run review (round 9). Cloned the repo fresh, installed it from GitHub into a clean venv
+  (`pip install git+...`, standing in for pipx: neither pipx nor uv is on the build machine) and followed
+  the README with an empty `HOME`: demo repos, `week`, `month`, `year`, `standup`, `--md/--html/--json`,
+  `--json -`, `--exclude`, `--ai` without the SDK, and the error paths (missing folder, no repos, no git
+  identity, bad `--date`). All behaved as documented; both dashboards render with no console errors,
+  no requests and no horizontal scroll at 360 px. Fixed: `--depth -1` was accepted on the command line
+  (and reported "within -1 levels") while the config file rejects it; it is now a usage error.
+  Read the whole codebase as a reviewer and found nothing else wrong. Still unchecked: `uvx` and pipx
+  themselves, a live `--ai` run, Windows by hand (CI runs the tests there). Known cosmetic: rich pads
+  the terminal report's table lines with trailing spaces when piped to a file.
 - Performance and accessibility pass (round 8, lens "perf-a11y"). Measured on 4 synthetic repos, 1,500
   days, about 1,400 commits in the year (`scripts/demo_repos.py --days 1500`): `devpulse --help` 0.26 s;
   `year` 8.5 s, all of it waiting on `git log --numstat` (Python itself under 0.3 s). Repos are now read
