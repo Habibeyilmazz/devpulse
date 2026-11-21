@@ -24,10 +24,10 @@ jobs:
           - os: windows-latest
             python-version: "3.12"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -49,10 +49,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: "3.12"
       - name: Build the wheel
@@ -68,3 +68,8 @@ jobs:
           /tmp/clean/bin/devpulse week /tmp/demo --md /tmp/out --html /tmp/out
           /tmp/clean/bin/devpulse standup /tmp/demo
           ls /tmp/out/*.md /tmp/out/*.html
+      - name: Audit the runtime dependencies, the optional AI ones included
+        run: |
+          /tmp/clean/bin/pip install "$(ls dist/*.whl)[ai]"
+          /tmp/clean/bin/pip freeze --exclude devpulse > /tmp/requirements.txt
+          pipx run pip-audit --strict --progress-spinner off -r /tmp/requirements.txt
