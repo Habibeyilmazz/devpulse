@@ -4,6 +4,8 @@ import os
 import subprocess
 import sys
 
+import pytest
+
 from conftest import ADA, BOB, git, lines, make_repo
 from devpulse import ai, cli
 
@@ -104,7 +106,7 @@ def test_no_commits_names_the_identity_that_was_searched(tmp_path, capsys):
     root = workspace(tmp_path)
 
     assert cli.main(["week", str(root), "--date", "2025-06-01"]) == 0
-    assert "No commits by ada@example.com found in 3 repo(s)" in capsys.readouterr().out
+    assert "No commits by ada@example.com found in 3 repos" in capsys.readouterr().out
     assert cli.main(["week", str(root), "--date", "2025-06-01", "--author", "Zed", "--author", "zed@example.com"]) == 0
     assert "No commits by Zed, zed@example.com found" in capsys.readouterr().out
 
@@ -131,6 +133,9 @@ def test_usage_errors(tmp_path, capsys):
     assert "not a folder" in capsys.readouterr().err
     assert cli.main(["week", str(workspace(tmp_path / "w")), "--date", "0001-01-01"]) == 2
     assert "out of range" in capsys.readouterr().err
+    with pytest.raises(SystemExit):
+        cli.main(["week", "--date", "10/03/2026"])
+    assert "'10/03/2026' is not a date; write it as YYYY-MM-DD" in capsys.readouterr().err
     (tmp_path / "file.txt").write_text("not a folder")
     assert cli.main(["week", str(workspace(tmp_path)), "--md", str(tmp_path / "file.txt" / "notes")]) == 1
     assert "file.txt" in capsys.readouterr().err

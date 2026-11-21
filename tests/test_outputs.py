@@ -62,12 +62,13 @@ def test_dashboard_renders_every_period_kind_and_the_empty_case():
     for kind in ("week", "month", "year"):
         page = dashboard.render(report(kind, today=date(2026, 12, 31)), date(2026, 12, 31))
         assert f"{kind}ly review" in page
-        assert ('class="cal"' in page) == (kind == "year")
+        assert page.count('class="cal"') == (2 if kind == "year" else 0)  # the year as two half-year grids
     year = dashboard.render(report("year"), MON)
     assert "Your 2026 in code" in year and "Busiest month" in year and "Your rhythm" in year
     empty = build_report([], period_for("week", MON), MON, repos_scanned=4)
     page = dashboard.render(empty, MON)
-    assert "No commits in this period" in page and "4 repos" in page
+    assert "No commits in this period" in page and "4 repos" in page and "in this week (9 Mar – 15 Mar 2026)" in page
+    assert "devpulse week --last" in page and 'class="figure"' not in page  # what to try next, and no big zero
 
 
 def test_heat_levels():
@@ -105,8 +106,8 @@ def test_terminal_report_without_commits():
 
 
 def test_spark():
-    assert spark([0, 1, 4, 8]) == " ▁▄█"
-    assert spark([]) == "" and spark([0, 0]) == "  "
+    assert spark([0, 1, 4, 8]) == "·▁▄█"
+    assert spark([]) == "" and spark([0, 0]) == "··"
 
 
 def test_standup_labels_the_last_active_day():

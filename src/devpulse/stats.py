@@ -308,8 +308,9 @@ def tiles(r: Report) -> list[tuple[str, str, str]]:
         ("Projects", str(len(r.projects)), ""),
         (
             f"vs previous {r.period.kind}",
-            "no baseline" if r.delta is None else f"{r.delta:+.0%}",
-            "so far" if r.in_progress else "",
+            # a real minus sign, like the one in "Lines changed"
+            "no baseline" if r.delta is None else f"{r.delta:+.0%}".replace("-", "−"),
+            "so far" if r.in_progress and r.delta is not None else "",
         ),
         ("Longest streak", fmt_days(r.longest_streak), ""),
         (

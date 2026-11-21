@@ -179,4 +179,10 @@ def test_empty_report_has_safe_defaults():
     assert r.commits == [] and r.sessions == [] and r.biggest_days == []
     assert (r.late_night, r.peak_hour, r.delta, r.current_streak) == (0.0, None, None, 0)
     labels = dict(facts(r))
-    assert labels["Commits"] == "0" and "Peak hour" not in labels
+    assert labels["Commits"] == "0" and "Peak hour" not in labels and labels["vs previous week"] == "no baseline"
+
+
+def test_a_slower_week_is_shown_with_a_real_minus_sign():
+    commits = [c("2026-03-03 10:00"), c("2026-03-04 10:00"), c("2026-03-10 10:00")]
+    r = build_report(commits, period_for("week", MON), today=date(2026, 3, 20), repos_scanned=1)
+    assert dict(facts(r))["vs previous week"] == "−50%"

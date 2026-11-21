@@ -11,7 +11,7 @@ from rich.table import Table
 from devpulse.gitlog import Commit
 from devpulse.stats import Report, facts, fmt_day
 
-BLOCKS = " ▁▂▃▄▅▆▇█"
+BLOCKS = "·▁▂▃▄▅▆▇█"  # a dot keeps an empty hour or day in its place on the axis
 
 
 def spark(values: list[int]) -> str:
@@ -24,7 +24,8 @@ def print_report(r: Report, console: Console) -> None:
     console.print(f"\n[bold]devpulse[/bold] · {p.kind}ly review · [bold]{p.title}[/bold] [dim]({p.span})[/dim]\n")
     if not r.commits:
         who = f" by {escape(', '.join(r.authors))}" if r.authors else ""
-        console.print(f"No commits{who} found in {r.repos_scanned} repo(s) for this period.", highlight=False)
+        repos = "1 repo" if r.repos_scanned == 1 else f"{r.repos_scanned} repos"
+        console.print(f"No commits{who} found in {repos} for this period.", highlight=False)
         console.print("[dim]If that is wrong, pass --author with the name or email you commit with.[/dim]\n")
         return
 

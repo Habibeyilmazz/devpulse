@@ -114,6 +114,13 @@ def run_standup(args: argparse.Namespace, console: Console) -> int:
     return 0
 
 
+def day(text: str) -> date:
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{text!r} is not a date; write it as YYYY-MM-DD") from None
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="devpulse",
@@ -130,7 +137,7 @@ def build_parser() -> argparse.ArgumentParser:
     )  # fmt: skip
     common.add_argument(
         "--date",
-        type=date.fromisoformat,
+        type=day,
         metavar="YYYY-MM-DD",
         help="report on the week, month, year or standup day that contains this day (default: today)",
     )
