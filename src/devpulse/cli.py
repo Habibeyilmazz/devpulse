@@ -34,7 +34,7 @@ def collect(root: Path, authors: list[str], depth: int, since: date) -> tuple[li
         raise UsageError(f"no git repositories found within {depth} levels of {root} (see --depth)")
     names = repo_names(root, repos)
     commits: dict[str, Commit] = {}
-    unknown = []
+    unknown, broken = [], []
     matched: dict[str, None] = {}  # an ordered set
     for repo in repos:
         who = authors or [a for a in [configured_author(repo)] if a]
@@ -42,13 +42,19 @@ def collect(root: Path, authors: list[str], depth: int, since: date) -> tuple[li
         if who:
             for c in read_commits(repo, names[repo], who, since):
                 commits.setdefault(c.sha, c)  # a linked work tree or second clone lists the same commits again
-        else:
+        elif enclosing_repo(repo):
             unknown.append(names[repo])
-    if len(unknown) == len(repos):
+        else:  # a .git that points nowhere, e.g. the leftover of a removed work tree
+            broken.append(names[repo])
+    if broken:
+        print(f"devpulse: not a readable git repository: {', '.join(broken)} (skipped)", file=sys.stderr)
+    if len(broken) == len(repos):
+        raise UsageError(f"no readable git repositories found within {depth} levels of {root}")
+    if len(unknown) + len(broken) == len(repos):
         raise UsageError("git has no user.email or user.name configured; pass --author NAME_OR_EMAIL")
     if unknown:
         print(f"devpulse: no git identity configured in: {', '.join(unknown)} (skipped)", file=sys.stderr)
-    return list(commits.values()), len(repos) - len(unknown), list(matched)
+    return list(commits.values()), len(repos) - len(unknown) - len(broken), list(matched)
 
 
 def target(path: Path, stem: str, suffix: str) -> Path:

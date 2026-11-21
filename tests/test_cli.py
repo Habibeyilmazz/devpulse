@@ -162,3 +162,21 @@ def test_ai_is_off_by_default_and_failures_do_not_break_the_report(tmp_path, cap
     assert cli.main(["week", str(root), "--date", "2026-03-10", "--ai", "--md", str(tmp_path / "n.md")]) == 0
     text = (tmp_path / "n.md").read_text(encoding="utf-8")
     assert "Solid week." in text and "- [ ] Sleep more." in text
+
+
+def test_stale_git_pointer_is_named_as_broken_not_as_a_missing_identity(tmp_path, capsys):
+    root = workspace(tmp_path)
+    (root / "gone").mkdir()
+    (root / "gone" / ".git").write_text("gitdir: /nowhere/worktrees/gone\n", encoding="utf-8")
+
+    assert cli.main(["week", str(root), "--date", "2026-03-10"]) == 0
+    printed = capsys.readouterr()
+    assert "not a readable git repository: gone" in printed.err and "identity" not in printed.err
+    assert "Tidy README" in printed.out
+
+    only = tmp_path / "only"
+    (only / "gone").mkdir(parents=True)
+    (only / "gone" / ".git").write_text("gitdir: /nowhere/worktrees/gone\n", encoding="utf-8")
+    assert cli.main(["week", str(only)]) == 2
+    err = capsys.readouterr().err
+    assert "no readable git repositories" in err and "identity" not in err
