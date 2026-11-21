@@ -98,7 +98,11 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}
 th{text-align:left;font-weight:500;color:var(--ink2);font-size:12.5px}
 th,td{padding:7px 12px 7px 0;border-top:1px solid var(--grid);vertical-align:top}
 tr:first-child th{border-top:0;padding-top:0}
+.scroll tr:first-child th{position:sticky;top:0;background:var(--surface);box-shadow:0 1px 0 var(--grid)}
 td.n,th.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+td.n,th[scope=col].n{text-align:right}
+th[scope=row]{font-size:inherit}
+td.z{color:var(--muted)}
 details{border-top:1px solid var(--grid);padding:10px 0}
 details:first-of-type{border-top:0}
 summary{cursor:pointer;font-weight:600;padding:4px 0}
@@ -291,7 +295,9 @@ def _tables(r: Report) -> str:
     ):
         head = "".join(f'<th scope="col" class="n">{h}</th>' for h in heads)
         body = "".join(
-            f'<tr><th scope="row" class="n">{x}</th>' + "".join(f'<td class="n">{n}</td>' for n in ns) + "</tr>"
+            f'<tr><th scope="row" class="n">{x}</th>'
+            + "".join(f'<td class="n{"" if n else " z"}">{n}</td>' for n in ns)
+            + "</tr>"
             for x, ns in rows
         )
         title = "Commits per day" if unit == "day" else "Commits per hour and weekday"
