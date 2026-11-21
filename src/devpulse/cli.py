@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from rich.console import Console
+from rich.markup import escape
 
 from devpulse import __version__, ai, config, dashboard, export, note
 from devpulse.gitlog import Commit, configured_author, enclosing_repo, find_repos, read_commits, repo_names
@@ -115,7 +116,7 @@ def run_review(args: argparse.Namespace, console: Console) -> int:
         written.append(("JSON data     ", file))
     print_report(report, console)
     for label, file in written:
-        console.print(f"{label} {file}", highlight=False, soft_wrap=True)
+        console.print(f"{label} {escape(str(file))}", highlight=False, soft_wrap=True)  # a [ in a path is not markup
     return 0
 
 

@@ -288,3 +288,12 @@ def test_a_hostile_repo_config_runs_nothing(tmp_path, capsys, monkeypatch):
         cli.main(argv)
     capsys.readouterr()
     assert not marker.exists()
+
+
+def test_written_paths_are_printed_as_they_are(tmp_path, capsys):
+    # rich read "[red]" in an output path as markup and printed a path that does not exist
+    root, out = workspace(tmp_path), tmp_path / "[red]notes[/red]"
+
+    assert cli.main(["week", str(root), "--date", "2026-03-10", "--md", str(out)]) == 0
+    file = out / "devpulse-2026-W11.md"
+    assert file.exists() and f"Markdown note  {file}" in capsys.readouterr().out
