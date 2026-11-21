@@ -68,8 +68,12 @@ def narrate(r: Report, client=None) -> tuple[str, str]:
         raise AIUnavailable(f"the API returned an error ({e.status_code})") from None
     except anthropic.APIConnectionError:
         raise AIUnavailable("could not reach the API") from None
-    except anthropic.AnthropicError as e:  # e.g. no credentials configured
+    except anthropic.AnthropicError as e:
         raise AIUnavailable(str(e)) from None
+    except TypeError as e:  # how the SDK reports that it found no credentials at all
+        if "authentication" not in str(e):
+            raise
+        raise AIUnavailable("no API credentials found; set ANTHROPIC_API_KEY") from None
     if response.stop_reason == "refusal":
         raise AIUnavailable("the model declined to write a summary")
     text = "".join(block.text for block in response.content if block.type == "text")

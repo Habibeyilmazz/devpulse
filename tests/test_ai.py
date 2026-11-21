@@ -63,3 +63,10 @@ def test_narrate_without_the_sdk(monkeypatch):
     monkeypatch.setitem(sys.modules, "anthropic", None)
     with pytest.raises(ai.AIUnavailable, match="not installed"):
         ai.narrate(report())
+
+
+def test_narrate_without_credentials_uses_the_real_sdk_and_fails_cleanly(monkeypatch):
+    pytest.importorskip("anthropic")
+    monkeypatch.delenv("ANTHROPIC_PROFILE", raising=False)  # conftest clears the keys and points HOME at a temp dir
+    with pytest.raises(ai.AIUnavailable, match="no API credentials"):
+        ai.narrate(report())
