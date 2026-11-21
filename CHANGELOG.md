@@ -23,6 +23,18 @@ All notable changes to this project are documented here. The format follows
   the options (`week ~/code --last ~/work`). An empty `path = []` is a config error. Picked because a
   newcomer whose repos are not all under one folder had no way to get one weekly note.
 
+### Changed
+
+- Round 16 (perf-a11y): measured first, found nothing worth changing in code. Demo year (1,333 commits,
+  4 repos): `devpulse year` 0.55-0.61 s wall (about 90% is waiting on parallel `git log`), `--version`
+  0.07 s, import 58 ms, dashboard 83 KB with no external requests. Accessibility check with Playwright on
+  the year dashboard in light and dark: lang and title set, one h1, h2 per section, main/header/footer
+  landmarks, every chart an `img` with a text alternative, zero text under WCAG AA contrast (4.5:1 / 3:1
+  large). Unused code: ruff finds none; `rich` is the only runtime dependency. Added the README screenshot
+  of the quarter dashboard (the round 15 gap). Still unverified: pipx/uvx, Obsidian, live `--ai`.
+  `scripts/demo_repos.py` is slow for very long histories (`--days 2000` took over two minutes); a
+  development script only, left alone.
+
 ### Fixed
 
 - Round 14 (launch): audited README, repo description/topics, CONTRIBUTING and issue templates; all present and accurate. Verified the README quickstart by installing from the GitHub URL into a clean venv and running `devpulse year` on the demo repos. No changes needed. Still unverified: pipx/uvx, Obsidian rendering, Windows UNC gitdir, a live `--ai` call. `week -- -dir --author x` reads later words as paths (argparse standard).

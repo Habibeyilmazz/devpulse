@@ -158,6 +158,10 @@ One HTML file with inline CSS and about ten lines of script for hover tooltips. 
 
 ![Year recap in dark mode: 1,474 commits, busiest month, top project, biggest day, rhythm, and a calendar heatmap of the year with the days still to come outlined](docs/screenshots/year-dark.png)
 
+`devpulse quarter` shows the quarter as a day-by-day calendar beside the weekday-by-hour heatmap, with the last four quarters as the trend:
+
+![Quarterly dashboard for Q4 2026: 245 commits, tiles, weekday-by-hour heatmap, a day-by-day calendar, projects, languages, quarter over quarter and focus sessions](docs/screenshots/quarter.png)
+
 On a phone the same file is one column, and the year calendar splits into two half-year grids instead of scrolling sideways:
 
 <p>
