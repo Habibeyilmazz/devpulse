@@ -47,6 +47,7 @@ Options for `week`, `month` and `year`:
 | --- | --- |
 | `--md PATH` | Write the Markdown note. `PATH` is a `.md` file or a folder, for example a folder in your Obsidian vault |
 | `--html PATH` | Write the HTML dashboard to a `.html` file or a folder |
+| `--json PATH` | Write the numbers and every commit as JSON to a `.json` file or a folder. `--json -` prints the JSON instead of the report. See [As JSON](#as-json) |
 | `--open` | Open the dashboard in your browser (in a temp folder if `--html` is not given) |
 | `--last` | Report on the previous week, month or year |
 | `--ai` | Add a narrative summary written by Claude. See [AI summary](#ai-summary-optional) |
@@ -60,7 +61,7 @@ Options for every command:
 | `--depth N` | How many folder levels below `PATH` to search for repos (default 3) |
 | `--exclude GLOB` | Skip every folder below `PATH` whose name or relative path matches, with all it contains: `forks`, `forks/*`, `client-*`. Case-sensitive. Repeat it for more patterns |
 
-Files are named after the period: `devpulse-2026-W47.md`, `devpulse-2026-11.html`, `devpulse-2026.html`.
+Files are named after the period: `devpulse-2026-W47.md`, `devpulse-2026-11.html`, `devpulse-2026.json`.
 
 ### In the terminal
 
@@ -164,6 +165,19 @@ On a phone the same file is one column, and the year calendar splits into two ha
 
 The charts are not the only way in: every chart has a text description for screen readers, commits per day and the whole weekday-by-hour heatmap are also tables, the project lists open with the keyboard, and the colours survive print and Windows high-contrast mode. A period without commits gets a page that says what was searched and what to try next.
 
+### As JSON
+
+`--json` writes the same report as data, for a script, a spreadsheet or a chart of your own: the period, the headline numbers unformatted, projects, languages, commits per day, the weekday-by-hour heatmap, the trend, biggest days, focus sessions and every commit with its project, SHA, author time, subject and line counts. `--json -` sends it to stdout instead of the report, so it pipes into `jq`:
+
+```sh
+$ devpulse week ~/code --json - | jq -c '.totals | {commits, active_days, focus_minutes, change_vs_previous}'
+{"commits":28,"active_days":5,"focus_minutes":864,"change_vs_previous":-0.1765}
+
+$ devpulse year ~/code --json - | jq -r '.commits[] | [.authored, .project, .subject] | @tsv' > 2026.tsv
+```
+
+Shares are fractions (`0.1765`, not `18%`), times are ISO 8601 with the commit's own UTC offset, and `heatmap` maps `Mon` to `Sun` to 24 hourly counts. `schema` is `1`; it goes up only when a key is renamed or removed. With `--ai`, the narrative is under `summary`.
+
 ## Config file (optional)
 
 Put the flags you would type every week in `~/.config/devpulse/config.toml` (or `$XDG_CONFIG_HOME/devpulse/config.toml`; set `DEVPULSE_CONFIG` to use another file). The same place is used on Windows, below your user folder. `devpulse --help` prints the path it looks at.
@@ -175,6 +189,7 @@ exclude = ["forks", "client-*"]               # like --exclude
 depth = 3
 md = "~/vault/Reviews"                        # write the note on every week, month and year run
 html = "~/Reports/devpulse"                   # and the dashboard
+json = "~/Reports/devpulse"                   # and the JSON data
 ```
 
 Every key is optional. With this file, `devpulse week` from any folder reviews `~/code`, leaves out the forks and client repos, and files the note in the vault.

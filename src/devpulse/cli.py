@@ -12,7 +12,7 @@ from pathlib import Path
 
 from rich.console import Console
 
-from devpulse import __version__, ai, config, dashboard, note
+from devpulse import __version__, ai, config, dashboard, export, note
 from devpulse.gitlog import Commit, configured_author, enclosing_repo, find_repos, read_commits, repo_names
 from devpulse.stats import build_report, period_for, window_start
 from devpulse.terminal import print_report, print_standup
@@ -97,6 +97,14 @@ def run_review(args: argparse.Namespace, console: Console) -> int:
         written.append(("HTML dashboard", file))
         if args.open:
             webbrowser.open(file.resolve().as_uri())
+    if args.json:
+        data = export.render(report, today)
+        if str(args.json) == "-":  # JSON on stdout instead of the report, for a pipe into jq
+            sys.stdout.write(data)
+            return 0
+        file = target(args.json, stem, ".json")
+        file.write_text(data, encoding="utf-8")
+        written.append(("JSON data     ", file))
     print_report(report, console)
     for label, file in written:
         console.print(f"{label} {file}", highlight=False, soft_wrap=True)
@@ -134,7 +142,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="devpulse",
         description="Your personal engineering review, generated from local git history. Nothing is uploaded.",
-        epilog=f"Defaults for PATH, --author, --exclude, --depth, --md and --html can be set in {config.config_path()}",
+        epilog=f"Defaults for PATH, --author, --exclude, --depth, --md, --html and --json can be set in {config.config_path()}",
     )
     parser.add_argument("--version", action="version", version=f"devpulse {__version__}")
     common = argparse.ArgumentParser(add_help=False)
@@ -176,6 +184,12 @@ def build_parser() -> argparse.ArgumentParser:
             "--html", type=Path, metavar="PATH", help="write the HTML dashboard to this .html file or folder"
         )
         p.add_argument(
+            "--json",
+            type=Path,
+            metavar="PATH",
+            help="write the numbers and commits as JSON to this .json file or folder; - prints it instead of the report",
+        )
+        p.add_argument(
             "--open",
             action="store_true",
             help="open the dashboard in your browser (written to a temp folder unless --html is given)",
@@ -203,6 +217,7 @@ def apply_config(args: argparse.Namespace, settings: dict) -> None:
     if args.command != "standup":
         args.md = args.md or settings.get("md")
         args.html = args.html or settings.get("html")
+        args.json = args.json or settings.get("json")
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,5 +1,6 @@
 """End-to-end runs of the CLI against synthetic repositories."""
 
+import json
 import os
 import subprocess
 import sys
@@ -44,6 +45,24 @@ def test_week_writes_note_and_dashboard(tmp_path, capsys):
     html = (out / "report.html").read_text(encoding="utf-8")
     assert "Dark mode &lt;toggle&gt;" in html and "Bob" not in html
     assert "TypeScript" in html and "in progress" not in html  # --date picks the week; it is long over
+
+
+def test_json_to_a_folder_or_to_stdout(tmp_path, capsys):
+    root = workspace(tmp_path)
+
+    assert cli.main(["week", str(root), "--date", "2026-03-10", "--json", str(tmp_path / "data")]) == 0
+    printed = capsys.readouterr().out
+    file = tmp_path / "data" / "devpulse-2026-W11.json"
+    assert "Week 11, 2026" in printed and f"JSON data      {file}" in printed
+    data = json.loads(file.read_text(encoding="utf-8"))
+    assert data["totals"]["commits"] == 4 and data["authors"] == ["ada@example.com"]
+
+    # `-` puts the JSON alone on stdout, so it pipes into jq; other files are still written
+    args = ["month", str(root), "--date", "2026-03-10", "--json", "-", "--md", str(tmp_path / "vault")]
+    assert cli.main(args) == 0
+    printed = capsys.readouterr()
+    assert json.loads(printed.out)["period"]["label"] == "2026-03" and printed.err == ""
+    assert (tmp_path / "vault" / "devpulse-2026-03.md").exists()
 
 
 def test_last_month_year_and_explicit_author(tmp_path, capsys):

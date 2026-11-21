@@ -1,13 +1,14 @@
 import base64
 import hashlib
 import io
+import json
 import re
 from datetime import date
 
 from rich.console import Console
 
 from conftest import c
-from devpulse import dashboard, note
+from devpulse import dashboard, export, note
 from devpulse.stats import build_report, facts, period_for
 from devpulse.terminal import print_report, print_standup, spark
 from test_stats import MON, week_commits
@@ -42,6 +43,37 @@ def test_note_lists_each_subject_once_and_caps_long_lists():
     text = note.render(report(extra=[*many, c("2026-03-12 10:00"), c("2026-03-12 10:05")]))
     assert text.count("- work\n") == 2  # once under api, once under web
     assert "- … and " in text
+
+
+def test_json_carries_the_raw_numbers_and_every_commit():
+    r = report(extra=[c("2026-03-11 10:00", repo="odd|name#1", subject=HOSTILE)])
+    r.authors = ["ada@"]
+
+    data = json.loads(export.render(r, date(2026, 3, 20)))
+
+    assert data["schema"] == 1 and data["generated"] == "2026-03-20"
+    assert data["period"] == {
+        "kind": "week", "label": "2026-W11", "start": "2026-03-09", "end": "2026-03-15",
+        "title": "Week 11, 2026", "in_progress": False,
+    }  # fmt: skip
+    totals = data["totals"]
+    assert (totals["commits"], totals["lines_added"], totals["projects"], totals["peak_hour"]) == (6, 156, 3, 9)
+    assert totals["focus_minutes"] == r.focus_minutes and totals["sessions"] == len(data["sessions"])
+    assert data["authors"] == ["ada@"] and data["summary"] is None
+    assert len(data["commits"]) == 6 and HOSTILE in [c["subject"] for c in data["commits"]]  # raw: JSON escapes it
+    assert {p["name"] for p in data["projects"]} == {"api", "web", "odd|name#1"}
+    assert data["heatmap"]["Mon"][9] == 2 and sum(map(sum, data["heatmap"].values())) == 6
+    assert sum(data["per_day"].values()) == 6 and list(data["per_day"])[0] == "2026-03-09"
+    assert data["trend"][-1] == {
+        "kind": "week",
+        "label": "2026-W11",
+        "start": "2026-03-09",
+        "end": "2026-03-15",
+        "commits": 6,
+    }
+
+    empty = json.loads(export.render(build_report([], period_for("year", MON), MON, 1), MON))
+    assert empty["totals"]["commits"] == 0 and empty["totals"]["peak_hour"] is None and empty["commits"] == []
 
 
 def test_dashboard_is_self_contained_and_escapes_everything():

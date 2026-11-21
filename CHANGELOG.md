@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `--json PATH` for `week`, `month` and `year` (round 7, feature): the report as data, with raw
+  numbers, projects, languages, per-day counts, the weekday-by-hour heatmap, trend, biggest days,
+  focus sessions and every commit. `--json -` prints it instead of the terminal report, for `jq`.
+  A `json` key in the config file sets a default folder. The output carries `"schema": 1`
+  (`export.py`); bump it only when a key is renamed or removed.
+- The dashboard's hour table now has a column per weekday and a total, so every heatmap cell can be
+  reached with the keyboard and a screen reader (round 7; the hover tooltips were the only way before).
+
 - Launch pass (round 6): CONTRIBUTING.md, issue templates, a README comparison with alternatives
   and a Contributing section. Checked the reported gaps: heatmap cells still have no keyboard focus
   (the hour table carries the same totals) and same-second identical empty commits still count once;
@@ -157,6 +165,9 @@ First release.
   alone never triggers an upload.
 - Known limits: history is bounded with `git log --since` (commit date, see README "How it works");
   a commit subject containing the byte 0x1E is cut at that byte.
+- Still open after round 7: two empty commits with the same subject in the same second count once
+  (the cherry-pick de-duplication key is author time, subject and files; telling them apart would need
+  parent SHAs). Judged too rare to change. `--json -` writes no "written" lines for other files.
 - Windows is covered by CI only (tests plus a piped run); nobody has used it there interactively.
 - Config lives in `config.py` (lookup and validation) and `cli.apply_config` (merging with flags).
   The tests isolate `HOME`, `USERPROFILE`, `XDG_CONFIG_HOME` and `DEVPULSE_CONFIG`.
@@ -164,8 +175,8 @@ First release.
   carries the data colour. There is no animation, so there is nothing for reduced-motion to switch off.
 - The dashboard was checked by eye and with Playwright scripts (overflow at ten widths, Tab order,
   hover tooltip, forced colours, print media). It has not been run through axe or Lighthouse, and not
-  through a real screen reader. Hover tooltips on single heatmap cells have no keyboard equivalent; the
-  per-day and per-hour totals are in the tables at the bottom, the weekday-by-hour split is not.
+  through a real screen reader. Hover tooltips on single heatmap cells are mouse-only by design; every
+  cell's number is also in the "Commits per hour and weekday" table at the bottom.
 - The README screenshots are cut from reports of `scripts/demo_repos.py` output with Playwright
   (1040 px wide for the desktop shots, 390 px for the phone shots, both at 2x). Retake them when the
   dashboard changes.

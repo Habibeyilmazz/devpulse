@@ -22,6 +22,7 @@ KEYS: dict[str, tuple[type, bool]] = {
     "depth": (int, False),
     "md": (str, True),
     "html": (str, True),
+    "json": (str, True),
 }
 
 
