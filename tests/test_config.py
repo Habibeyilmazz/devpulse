@@ -91,3 +91,13 @@ def test_everything_excluded_points_at_the_flag(tmp_path, capsys):
     root = workspace(tmp_path)
     assert cli.main(["week", str(root), "--exclude", "*"]) == 2
     assert "(see --depth, --exclude)" in capsys.readouterr().err
+
+
+def test_a_notepad_file_with_a_byte_order_mark_loads_and_a_binary_one_is_named(tmp_path):
+    file = tmp_path / "c.toml"
+    file.write_bytes(b"\xef\xbb\xbfdepth = 2\n")  # what Windows Notepad saves by default
+    assert config.load(file) == {"depth": 2}
+
+    file.write_bytes(b"depth = \xff\xfe\n")
+    with pytest.raises(config.ConfigError, match="c.toml"):
+        config.load(file)

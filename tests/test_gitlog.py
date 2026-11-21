@@ -192,3 +192,19 @@ def test_a_moved_file_counts_only_the_lines_edited_in_it(tmp_path):
     move = max(read_commits(repo, "r", [ADA[1]], SINCE), key=lambda c: c.when)
 
     assert sorted(move.files) == [("b.txt", 1, 1), ("new/app.py", 1, 0)]
+
+
+def test_an_empty_or_enormous_subject_is_readable_in_every_output(tmp_path):
+    repo = make_repo(
+        tmp_path / "r",
+        [
+            ("2026-03-09T09:00:00+00:00", "", {"a.py": lines(1)}),
+            ("2026-03-09T10:00:00+00:00", "x" * 50_000, {"b.py": lines(1)}),
+        ],
+    )
+
+    subjects = {c.subject for c in read_commits(repo, "r", [ADA[1]], SINCE)}
+
+    assert "(no message)" in subjects
+    assert max(map(len, subjects)) <= gitlog.MAX_SUBJECT
+    assert any(s.endswith("…") for s in subjects)

@@ -136,6 +136,9 @@ def test_usage_errors(tmp_path, capsys):
     with pytest.raises(SystemExit):
         cli.main(["week", "--date", "10/03/2026"])
     assert "'10/03/2026' is not a date; write it as YYYY-MM-DD" in capsys.readouterr().err
+    with pytest.raises(SystemExit):  # an empty author text matches every commit, which is never what was meant
+        cli.main(["week", "--author", " "])
+    assert "--author" in capsys.readouterr().err
     (tmp_path / "file.txt").write_text("not a folder")
     assert cli.main(["week", str(workspace(tmp_path)), "--md", str(tmp_path / "file.txt" / "notes")]) == 1
     assert "file.txt" in capsys.readouterr().err

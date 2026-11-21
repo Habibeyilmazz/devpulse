@@ -16,6 +16,22 @@ All notable changes to this project are documented here. The format follows
 - `--exclude GLOB` (repeatable): skip folders whose name or path below `PATH` matches, with everything
   inside them. Matching is case-sensitive on every platform; `*` also crosses `/`.
 
+### Fixed
+
+- Reliability pass (round 5, lens "tests"). Tried to break the tool with odd repos (empty, binary-only,
+  detached HEAD, bare, future-dated, +14:00 and -12:00 offsets, emoji and bidi subjects), 17,000
+  commits in one repo (0.5 s), four runs writing one file, and odd flags and config files.
+  Most of it held. Fixed, each with a test written first:
+  - A config file saved by Windows Notepad (UTF-8 with a byte order mark) failed with
+    "Invalid statement"; it now loads, and a file that is not UTF-8 is named in the error.
+  - A commit with an empty message printed as a blank bullet; it now reads "(no message)". A commit
+    subject of 100,000 characters went whole into the note, the dashboard, standup and the AI prompt;
+    subjects are cut at 300 characters.
+  - `--author ""` matched every commit; it is now a usage error.
+  Known and left: two empty commits with the same subject in the same second count once (the
+  cherry-pick de-duplication); the heatmap cells still have no keyboard focus (the hour table under
+  it carries the same numbers); Windows and a live `--ai` run were not exercised.
+
 ### Security
 
 A security pass over the whole repo (round 3). Findings fixed, each with a regression test:

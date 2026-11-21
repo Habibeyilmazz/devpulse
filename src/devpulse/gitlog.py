@@ -31,6 +31,9 @@ IGNORED_PARTS = {"node_modules", "vendor", "dist", "build", "__pycache__"}
 _UNPRINTABLE = re.compile("[\x00-\x08\x0a-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]")
 
 
+MAX_SUBJECT = 300  # a pasted log or minified file as a subject would otherwise swell every note and AI prompt
+
+
 def printable(text: str) -> str:
     return _UNPRINTABLE.sub("\ufffd", text)
 
@@ -163,7 +166,9 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
         if len(fields) != 3:
             continue
         sha, when_text, subject = fields
-        subject = printable(subject)
+        subject = printable(subject) or "(no message)"
+        if len(subject) > MAX_SUBJECT:
+            subject = subject[: MAX_SUBJECT - 1] + "…"
         try:
             # git writes UTC as "Z", which fromisoformat only accepts from Python 3.11
             when = datetime.fromisoformat(when_text.replace("Z", "+00:00"))

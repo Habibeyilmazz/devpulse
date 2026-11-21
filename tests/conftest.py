@@ -54,7 +54,7 @@ def commit(repo: Path, when: str, subject: str, files: dict, who=ADA) -> None:
         "GIT_AUTHOR_NAME": who[0], "GIT_AUTHOR_EMAIL": who[1], "GIT_AUTHOR_DATE": when,
         "GIT_COMMITTER_NAME": who[0], "GIT_COMMITTER_EMAIL": who[1], "GIT_COMMITTER_DATE": when,
     }  # fmt: skip
-    git(repo, "commit", "-q", "--allow-empty", "-m", subject, env=env)
+    git(repo, "commit", "-q", "--allow-empty", "--allow-empty-message", "-m", subject, env=env)
 
 
 def lines(n: int) -> str:

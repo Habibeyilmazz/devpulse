@@ -124,6 +124,12 @@ def day(text: str) -> date:
         raise argparse.ArgumentTypeError(f"{text!r} is not a date; write it as YYYY-MM-DD") from None
 
 
+def author(text: str) -> str:
+    if not text.strip():
+        raise argparse.ArgumentTypeError("needs a name or email, not empty text")
+    return text
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="devpulse",
@@ -136,7 +142,7 @@ def build_parser() -> argparse.ArgumentParser:
         "path", nargs="?", type=Path, help="folder that contains your repos (default: `path` from the config, else .)"
     )
     common.add_argument(
-        "--author", action="append", default=[], metavar="NAME_OR_EMAIL",
+        "--author", action="append", default=[], type=author, metavar="NAME_OR_EMAIL",
         help="count commits whose author contains this text; repeatable (default: each repo's git user.email)",
     )  # fmt: skip
     common.add_argument(

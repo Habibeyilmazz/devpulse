@@ -41,12 +41,12 @@ def load(file: Path | None = None) -> dict:
     file = file or config_path()
     try:
         with open(file, "rb") as f:
-            data = tomllib.load(f)
+            data = tomllib.loads(f.read().decode("utf-8-sig"))  # Notepad writes a BOM
     except FileNotFoundError:
         if os.environ.get("DEVPULSE_CONFIG"):
             raise ConfigError(f"{file}: no such file (named by DEVPULSE_CONFIG)") from None
         return {}
-    except tomllib.TOMLDecodeError as e:
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
         raise ConfigError(f"{file}: {e}") from None
     except OSError as e:
         raise ConfigError(f"{file}: {e.strerror or e}") from None
