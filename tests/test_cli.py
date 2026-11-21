@@ -75,6 +75,9 @@ def test_usage_errors(tmp_path, capsys):
     assert "no git repositories found" in capsys.readouterr().err
     assert cli.main(["week", str(tmp_path / "missing")]) == 2
     assert "not a folder" in capsys.readouterr().err
+    (tmp_path / "file.txt").write_text("not a folder")
+    assert cli.main(["week", str(workspace(tmp_path)), "--md", str(tmp_path / "file.txt" / "notes")]) == 1
+    assert "file.txt" in capsys.readouterr().err
     make_repo(tmp_path / "anon" / "r", identity=None)
     assert cli.main(["week", str(tmp_path / "anon")]) == 2
     assert "pass --author" in capsys.readouterr().err

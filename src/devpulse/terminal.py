@@ -92,4 +92,5 @@ def _bullets(title: str, commits: list[Commit], console: Console) -> None:
             subjects.append(c.subject)
     for repo, subjects in by_repo.items():
         for s in subjects:
-            console.print(f"  - [cyan]{escape(repo)}[/cyan]: {escape(s)}", highlight=False)
+            # soft_wrap: a pasted bullet must stay one line however narrow the terminal is
+            console.print(f"  - [cyan]{escape(repo)}[/cyan]: {escape(s)}", highlight=False, soft_wrap=True)

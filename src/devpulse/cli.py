@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import tempfile
 import webbrowser
@@ -166,3 +167,9 @@ def main(argv: list[str] | None = None) -> int:
     except UsageError as e:
         print(f"devpulse: {e}", file=sys.stderr)
         return 2
+    except BrokenPipeError:  # e.g. `devpulse standup | head -3`
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())  # keep the exit flush quiet
+        return 1
+    except OSError as e:  # an unwritable --md/--html target, or git missing from PATH
+        print(f"devpulse: {e}", file=sys.stderr)
+        return 1

@@ -54,9 +54,9 @@ p{margin:0}
 .scale{display:flex;gap:3px;align-items:center;justify-content:flex-end;margin-top:12px;font-size:11px;color:var(--muted)}
 .scale i{width:11px;height:11px;border-radius:3px;background:var(--q0)}
 .scroll{overflow-x:auto}
-.cal{display:grid;grid-template-rows:auto repeat(7,minmax(0,1fr));grid-auto-flow:column;grid-auto-columns:minmax(11px,1fr);gap:2px;min-width:700px}
+.cal{display:grid;grid-template-rows:auto repeat(7,minmax(0,1fr));grid-template-columns:2rem;grid-auto-flow:column;grid-auto-columns:minmax(11px,1fr);gap:2px;min-width:740px}
 .cal i.out{background:none}
-.cal span{height:16px;white-space:nowrap;overflow:visible}
+.cal span{display:flex;align-items:center;min-height:16px;white-space:nowrap}
 .cols{display:flex;gap:2px;align-items:flex-end;border-bottom:1px solid var(--axis);height:150px}
 .cols>div{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
 .cols b{font-size:11px;font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums}
@@ -138,7 +138,8 @@ def _heat(r: Report) -> str:
 def _calendar(r: Report) -> str:
     top = max(r.per_day.values())
     day = r.period.start - timedelta(days=r.period.start.weekday())
-    cells = []
+    # first grid column: a blank corner, then a label on every other weekday row
+    cells = ["<span></span>"] + [f"<span>{name if i % 2 == 0 else ''}</span>" for i, name in enumerate(WEEKDAYS)]
     while day <= r.period.end:
         week = [day + timedelta(days=i) for i in range(7)]
         firsts = [d for d in week if d.day == 1 and d in r.per_day]
