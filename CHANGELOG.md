@@ -8,6 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Design pass (round 10). Looked at the terminal (piped and on a tty, 60/80/100 columns) and the
+  dashboard in Playwright (1280 and 390 px, light and dark, week/month/year/empty, keyboard only).
+  Fixed:
+  - The report's table rows ended in rich's padding spaces when piped (the gap from round 9); output
+    now goes through `terminal.NoTrailingSpaces`. On a tty, rich's highlighter coloured some numbers
+    cyan (the period, the hour axis, language shares, standup dates); highlighting is off.
+  - The year calendar drew days still to come like days without commits, so December looked like a
+    break; they are now outlined squares, and the card's note says so while the year is in progress.
+  - The empty dashboard suggested `--last` for a past period chosen with `--date`, but `--last` counts
+    back from today; it now names the earlier period with `--date`.
+  - The chart tables: numbers right-aligned under their headings, zeros dimmed, header row sticky.
+  - `standup` printed "Today" without its date when nothing was committed yet.
+  - README screenshots and the terminal sample retaken from the demo repos (`--date 2026-11-20`).
+  Left alone: the layout, type and colours already held up at every size checked; no motion to
+  reduce. Still unchecked: axe/Lighthouse (not installed), pipx/uvx, a live `--ai` run.
 - First-run review (round 9). Cloned the repo fresh, installed it from GitHub into a clean venv
   (`pip install git+...`, standing in for pipx: neither pipx nor uv is on the build machine) and followed
   the README with an empty `HOME`: demo repos, `week`, `month`, `year`, `standup`, `--md/--html/--json`,
