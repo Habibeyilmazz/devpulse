@@ -22,8 +22,9 @@ class UsageError(Exception):
     pass
 
 
-def collect(root: Path, authors: list[str], depth: int, since: date) -> tuple[list[Commit], int]:
-    """Commits since `since` from every repo under `root`, and the number of repos read."""
+def collect(root: Path, authors: list[str], depth: int, since: date) -> tuple[list[Commit], int, list[str]]:
+    """Commits since `since` from every repo under `root`, the number of repos read, and the identities matched."""
+    root = root.expanduser()  # cmd.exe and PowerShell pass ~ through, and so does a quoted "~/code"
     if not root.is_dir():
         raise UsageError(f"not a folder: {root}")
     repos = find_repos(root, depth)
@@ -34,8 +35,10 @@ def collect(root: Path, authors: list[str], depth: int, since: date) -> tuple[li
     names = repo_names(root, repos)
     commits: dict[str, Commit] = {}
     unknown = []
+    matched: dict[str, None] = {}  # an ordered set
     for repo in repos:
         who = authors or [a for a in [configured_author(repo)] if a]
+        matched.update(dict.fromkeys(who))
         if who:
             for c in read_commits(repo, names[repo], who, since):
                 commits.setdefault(c.sha, c)  # a linked work tree or second clone lists the same commits again
@@ -45,7 +48,7 @@ def collect(root: Path, authors: list[str], depth: int, since: date) -> tuple[li
         raise UsageError("git has no user.email or user.name configured; pass --author NAME_OR_EMAIL")
     if unknown:
         print(f"devpulse: no git identity configured in: {', '.join(unknown)} (skipped)", file=sys.stderr)
-    return list(commits.values()), len(repos) - len(unknown)
+    return list(commits.values()), len(repos) - len(unknown), list(matched)
 
 
 def target(path: Path, stem: str, suffix: str) -> Path:
@@ -61,8 +64,9 @@ def run_review(args: argparse.Namespace, console: Console) -> int:
     period = period_for(args.command, args.date or today)
     if args.last:
         period = period.previous()
-    commits, n_repos = collect(args.path, args.author, args.depth, window_start(period))
+    commits, n_repos, authors = collect(args.path, args.author, args.depth, window_start(period))
     report = build_report(commits, period, today, n_repos)
+    report.authors = authors
 
     if args.ai and report.commits:
         try:
@@ -89,7 +93,7 @@ def run_review(args: argparse.Namespace, console: Console) -> int:
 
 def run_standup(args: argparse.Namespace, console: Console) -> int:
     today = args.date or date.today()
-    commits, _ = collect(args.path, args.author, args.depth, today - timedelta(days=7))
+    commits, _, _ = collect(args.path, args.author, args.depth, today - timedelta(days=7))
     earlier = [c for c in commits if c.day < today]
     last_day = max((c.day for c in earlier), default=None)
     print_standup(
@@ -164,6 +168,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):
+        # A pipe on Windows (Git Bash, `> file`) gets the legacy code page, which has no sparkline blocks.
+        if hasattr(stream, "reconfigure") and "utf" not in (stream.encoding or "").lower():
+            stream.reconfigure(encoding="utf-8")
     console = Console()
     try:
         return run_standup(args, console) if args.command == "standup" else run_review(args, console)
@@ -173,6 +181,8 @@ def main(argv: list[str] | None = None) -> int:
     except OverflowError:
         print("devpulse: --date is out of range", file=sys.stderr)
         return 2
+    except KeyboardInterrupt:
+        return 130
     except BrokenPipeError:  # e.g. `devpulse standup | head -3`
         os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())  # keep the exit flush quiet
         return 1

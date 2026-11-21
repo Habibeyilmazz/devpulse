@@ -171,6 +171,7 @@ class Report:
     trend: list[tuple[Period, int]]  # oldest first, this period last
     narrative: str = ""  # optional AI text
     improve: str = ""
+    authors: list[str] = field(default_factory=list)  # the identities commits were matched against
     added: int = field(init=False)
     deleted: int = field(init=False)
 

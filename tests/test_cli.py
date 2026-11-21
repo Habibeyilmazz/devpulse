@@ -1,5 +1,9 @@
 """End-to-end runs of the CLI against synthetic repositories."""
 
+import os
+import subprocess
+import sys
+
 from conftest import ADA, BOB, git, lines, make_repo
 from devpulse import ai, cli
 
@@ -86,6 +90,37 @@ def test_path_inside_a_repo_reports_on_that_repo(tmp_path, capsys):
 
     assert cli.main(["standup", str(root / "api" / "docs"), "--date", "2026-03-10"]) == 0
     assert "api: Tidy README" in capsys.readouterr().out
+
+
+def test_tilde_in_path_is_expanded_even_when_the_shell_did_not(tmp_path, capsys, monkeypatch):
+    workspace(tmp_path)
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # Windows; conftest already points HOME here
+
+    assert cli.main(["standup", "~/code", "--date", "2026-03-10"]) == 0
+    assert "api: Tidy README" in capsys.readouterr().out
+
+
+def test_no_commits_names_the_identity_that_was_searched(tmp_path, capsys):
+    root = workspace(tmp_path)
+
+    assert cli.main(["week", str(root), "--date", "2025-06-01"]) == 0
+    assert "No commits by ada@example.com found in 3 repo(s)" in capsys.readouterr().out
+    assert cli.main(["week", str(root), "--date", "2025-06-01", "--author", "Zed", "--author", "zed@example.com"]) == 0
+    assert "No commits by Zed, zed@example.com found" in capsys.readouterr().out
+
+
+def test_output_survives_a_pipe_with_a_legacy_code_page(tmp_path):
+    """Git Bash and `> file` on Windows hand Python a cp1252 pipe, which cannot encode the sparklines."""
+    root = workspace(tmp_path)
+
+    done = subprocess.run(
+        [sys.executable, "-m", "devpulse", "week", str(root), "--date", "2026-03-10"],
+        capture_output=True,
+        env={**os.environ, "PYTHONIOENCODING": "cp1252"},
+    )
+
+    assert done.returncode == 0, done.stderr.decode(errors="replace")
+    assert "+40 / −0" in done.stdout.decode("utf-8") and "█" in done.stdout.decode("utf-8")
 
 
 def test_usage_errors(tmp_path, capsys):

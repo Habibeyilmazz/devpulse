@@ -6,7 +6,7 @@ from rich.console import Console
 
 from conftest import c
 from devpulse import dashboard, note
-from devpulse.stats import build_report, period_for
+from devpulse.stats import build_report, facts, period_for
 from devpulse.terminal import print_report, print_standup, spark
 from test_stats import MON, week_commits
 
@@ -85,6 +85,17 @@ def test_terminal_report_prints_hostile_subjects_verbatim():
     text = out.getvalue()
     assert HOSTILE in text and "[red]narrative[/red]" in text
     assert "Week 11, 2026" in text and "Focus time (est.)" in text and "3h 00m (5 sessions)" in text
+
+
+def test_terminal_report_uses_one_column_in_a_narrow_terminal():
+    r = report()
+    labels = [label for label, _ in facts(r)]
+    for width, most in ((80, 1), (120, 2)):
+        out = io.StringIO()
+        print_report(r, Console(file=out, width=width))
+        text = out.getvalue()
+        assert max(sum(label in line for label in labels) for line in text.splitlines()) == most
+        assert all(value in text for _, value in facts(r))  # nothing wrapped mid-value
 
 
 def test_terminal_report_without_commits():

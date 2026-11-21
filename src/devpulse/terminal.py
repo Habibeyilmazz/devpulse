@@ -23,13 +23,15 @@ def print_report(r: Report, console: Console) -> None:
     p = r.period
     console.print(f"\n[bold]devpulse[/bold] · {p.kind}ly review · [bold]{p.title}[/bold] [dim]({p.span})[/dim]\n")
     if not r.commits:
-        console.print(f"No commits found in {r.repos_scanned} repo(s) for this period.")
+        who = f" by {escape(', '.join(r.authors))}" if r.authors else ""
+        console.print(f"No commits{who} found in {r.repos_scanned} repo(s) for this period.", highlight=False)
         console.print("[dim]If that is wrong, pass --author with the name or email you commit with.[/dim]\n")
         return
 
     grid = Table.grid(padding=(0, 3))
     pairs = facts(r)
-    half = (len(pairs) + 1) // 2
+    # two columns need about 100 characters; a default 80-column terminal gets one
+    half = (len(pairs) + 1) // 2 if console.width >= 100 else len(pairs)
     for i in range(half):
         row = [f"[dim]{pairs[i][0]}[/dim]", f"[bold]{pairs[i][1]}[/bold]"]
         if i + half < len(pairs):
