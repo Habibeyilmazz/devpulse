@@ -57,7 +57,10 @@ def test_dashboard_is_self_contained_and_escapes_everything():
     assert not re.search(r"""(?:src|href)\s*=|url\(|@import|https?://|fetch\(|XMLHttpRequest""", page)
     assert page.count("<script>") == 1
     assert 'data-tip="Mon 09:00–09:59 · 2 commits"' in page
-    assert '<td class="n">09:00</td><td class="n">2</td>' in page  # the heatmap's hours are also a table
+    # every heatmap cell is also in a table: 09:00 has Mon 2, Tue to Sun 0, All 2; 10:00 has Wed 1
+    cell = '<td class="n">{}</td>'.format
+    assert '<th scope="row" class="n">09:00</th>' + cell(2) + cell(0) * 6 + cell(2) + "</tr>" in page
+    assert '<th scope="row" class="n">10:00</th>' + cell(0) * 2 + cell(1) + cell(0) * 4 + cell(1) + "</tr>" in page
     assert "Week 11, 2026" in page and "9 Mar – 15 Mar 2026" in page
 
 

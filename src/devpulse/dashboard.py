@@ -278,15 +278,24 @@ def _shipped(r: Report) -> str:
 
 def _tables(r: Report) -> str:
     """The charts' numbers as text, for a screen reader, a keyboard or a copy and paste."""
-    per_day = [(d.isoformat(), n) for d, n in r.per_day.items()]
-    per_hour = [(f"{h:02d}:00", sum(row[h] for row in r.heat)) for h in range(24)]
+    per_day = [(d.isoformat(), [n]) for d, n in r.per_day.items()]
+    # the heatmap's cells as rows of hours, so its weekday-by-hour split is reachable without a mouse
+    per_hour = [(f"{h:02d}:00", [*(row[h] for row in r.heat), sum(row[h] for row in r.heat)]) for h in range(24)]
     out = []
-    for unit, rows in (("day", per_day), ("hour", per_hour)):
-        body = "".join(f'<tr><td class="n">{x}</td><td class="n">{n}</td></tr>' for x, n in rows)
+    for unit, first, heads, rows in (
+        ("day", "Date", ["Commits"], per_day),
+        ("hour", "Hour", [*WEEKDAYS, "All"], per_hour),
+    ):
+        head = "".join(f'<th scope="col" class="n">{h}</th>' for h in heads)
+        body = "".join(
+            f'<tr><th scope="row" class="n">{x}</th>' + "".join(f'<td class="n">{n}</td>' for n in ns) + "</tr>"
+            for x, ns in rows
+        )
+        title = "Commits per day" if unit == "day" else "Commits per hour and weekday"
         out.append(
-            f"<details><summary>Commits per {unit} as a table</summary>"
-            f'<div class="scroll" tabindex="0" role="group" aria-label="Commits per {unit}">'
-            f"<table><tr><th>{'Date' if unit == 'day' else 'Hour'}</th><th>Commits</th></tr>{body}</table></div></details>"
+            f"<details><summary>{title} as a table</summary>"
+            f'<div class="scroll" tabindex="0" role="group" aria-label="{title}">'
+            f'<table><tr><th scope="col">{first}</th>{head}</tr>{body}</table></div></details>'
         )
     return "".join(out)
 
