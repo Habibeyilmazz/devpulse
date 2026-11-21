@@ -25,19 +25,24 @@ class UsageError(Exception):
 
 
 def collect(
-    root: Path, authors: list[str], depth: int, since: date, exclude: list[str] = ()
+    roots: list[Path], authors: list[str], depth: int, since: date, exclude: list[str] = ()
 ) -> tuple[list[Commit], int, list[str]]:
-    """Commits since `since` from every repo under `root`, the number of repos read, and the identities matched."""
-    root = root.expanduser()  # cmd.exe and PowerShell pass ~ through, and so does a quoted "~/code"
-    if not root.is_dir():
-        raise UsageError(f"not a folder: {root}")
-    repos = find_repos(root, depth, exclude)
-    if not repos and (inside := enclosing_repo(root)):
-        repos = [inside]  # PATH is a subfolder of a single repo
+    """Commits since `since` from every repo under each of `roots`, the number of repos read, and the identities matched."""
+    found: dict[Path, None] = {}  # an ordered set: overlapping roots find a repo once
+    for root in roots:
+        root = root.expanduser()  # cmd.exe and PowerShell pass ~ through, and so does a quoted "~/code"
+        if not root.is_dir():
+            raise UsageError(f"not a folder: {root}")
+        repos = find_repos(root, depth, exclude)
+        if not repos and (inside := enclosing_repo(root)):
+            repos = [inside]  # PATH is a subfolder of a single repo
+        found.update(dict.fromkeys(r.resolve() for r in repos))
+    repos = list(found)
+    where = ", ".join(str(r.expanduser()) for r in roots)
     if not repos:
         hint = "--depth, --exclude" if exclude else "--depth"
-        raise UsageError(f"no git repositories found within {depth} levels of {root} (see {hint})")
-    names = repo_names(root, repos)
+        raise UsageError(f"no git repositories found within {depth} levels of {where} (see {hint})")
+    names = repo_names(repos)
     commits: dict[str, Commit] = {}
     unknown, broken = [], []
     matched: dict[str, None] = {}  # an ordered set
@@ -61,7 +66,7 @@ def collect(
     if broken:
         print(f"devpulse: not a readable git repository: {', '.join(broken)} (skipped)", file=sys.stderr)
     if len(broken) == len(repos):
-        raise UsageError(f"no readable git repositories found within {depth} levels of {root}")
+        raise UsageError(f"no readable git repositories found within {depth} levels of {where}")
     if len(unknown) + len(broken) == len(repos):
         raise UsageError("git has no user.email or user.name configured; pass --author NAME_OR_EMAIL")
     if unknown:
@@ -162,7 +167,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"devpulse {__version__}")
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument(
-        "path", nargs="?", type=Path, help="folder that contains your repos (default: `path` from the config, else .)"
+        "path",
+        nargs="*",
+        type=Path,
+        metavar="PATH",
+        help="folders that contain your repos, one or more (default: `path` from the config, else .)",
     )
     common.add_argument(
         "--author", action="append", default=[], type=author, metavar="NAME_OR_EMAIL",
@@ -227,7 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def apply_config(args: argparse.Namespace, settings: dict) -> None:
     """Fill what the command line left out from the config file. --exclude adds to the config's list."""
-    args.path = args.path or settings.get("path", Path("."))
+    args.path = args.path or settings.get("path", [Path(".")])
     args.author = args.author or settings.get("authors", [])
     args.exclude = settings.get("exclude", []) + args.exclude
     args.depth = settings.get("depth", 3) if args.depth is None else args.depth
@@ -238,7 +247,12 @@ def apply_config(args: argparse.Namespace, settings: dict) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    # argparse fills PATH... from one run of words, so `week ~/a --last ~/b` would leave ~/b over
+    args, extra = parser.parse_known_args(argv)
+    if any(e.startswith("-") for e in extra):
+        parser.error(f"unrecognized arguments: {' '.join(extra)}")
+    args.path += [Path(e) for e in extra]
     try:
         apply_config(args, config.load())
     except config.ConfigError as e:

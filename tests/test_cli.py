@@ -106,6 +106,37 @@ def test_linked_work_trees_and_second_clones_do_not_double_count(tmp_path, capsy
     assert "commits: 4" in text and 'projects: ["api", "web"]' in text
 
 
+def test_several_paths_are_read_together(tmp_path, capsys):
+    root = workspace(tmp_path)
+    work = make_repo(tmp_path / "work" / "api", [("2026-03-10T11:00:00+01:00", "Ship invoices", {"x.py": lines(3)})])
+
+    # root/api comes twice, through root and on its own; a folder inside a repo still means that repo
+    (work / "sub").mkdir()
+    args = [
+        "week",
+        str(root),
+        str(root / "api"),
+        "--date",
+        "2026-03-10",
+        str(work / "sub"),
+        "--md",
+        str(tmp_path / "n.md"),
+    ]
+    assert cli.main(args) == 0
+
+    text = (tmp_path / "n.md").read_text(encoding="utf-8")
+    assert "commits: 5" in text and 'projects: ["code/api", "web", "work/api"]' in text
+
+
+def test_a_missing_path_among_several_stops_the_run(tmp_path, capsys):
+    root = workspace(tmp_path)
+    assert cli.main(["week", str(root), str(tmp_path / "nope")]) == 2
+    assert "not a folder" in capsys.readouterr().err
+    with pytest.raises(SystemExit):
+        cli.main(["week", str(root), "--date", "2026-03-10", "--lats"])
+    assert "unrecognized arguments: --lats" in capsys.readouterr().err
+
+
 def test_path_inside_a_repo_reports_on_that_repo(tmp_path, capsys):
     root = workspace(tmp_path)
     (root / "api" / "docs").mkdir()

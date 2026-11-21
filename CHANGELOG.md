@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Several folders at once (round 12, feature): `devpulse week ~/code ~/work` reviews the repos under
+  every folder given as one report, and the config file's `path` takes a list (a plain string still
+  works). A repo reached through two folders is read once; two repos with the same folder name are named
+  by their path below their common folder (`code/api`, `work/api`). The folders can sit on either side of
+  the options (`week ~/code --last ~/work`). An empty `path = []` is a config error. Picked because a
+  newcomer whose repos are not all under one folder had no way to get one weekly note.
+
 ### Fixed
 
 - Round 12: the Markdown note put commit subjects, the AI narrative and the "one thing" in raw, so a

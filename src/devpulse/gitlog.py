@@ -93,13 +93,22 @@ def find_repos(root: Path, depth: int = 3, exclude: list[str] = ()) -> list[Path
     return repos
 
 
-def repo_names(root: Path, repos: list[Path]) -> dict[Path, str]:
-    """Folder name, or the path relative to `root` when two repos share a folder name."""
-    root = Path(root).expanduser().resolve()
+def repo_names(repos: list[Path]) -> dict[Path, str]:
+    """Folder name, or the path below the repos' common folder when two repos share a folder name."""
     counts: dict[str, int] = {}
     for r in repos:
         counts[r.name] = counts.get(r.name, 0) + 1
-    return {r: printable(r.name if counts[r.name] == 1 or r == root else r.relative_to(root).as_posix()) for r in repos}
+    try:
+        base = Path(os.path.commonpath(repos))
+    except ValueError:  # repos on different Windows drives share no folder
+        base = None
+
+    def name(r: Path) -> str:
+        if counts[r.name] == 1 or r == base:
+            return r.name
+        return r.relative_to(base).as_posix() if base else r.as_posix()
+
+    return {r: printable(name(r)) for r in repos}
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:

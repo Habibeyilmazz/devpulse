@@ -22,7 +22,7 @@ Or run it once without installing:
 uvx --from git+https://github.com/Habibeyilmazz/devpulse devpulse week ~/code --open
 ```
 
-`~/code` is whatever folder contains your repositories. devpulse finds every repo below it and counts the commits made with each repo's configured `user.email`. Nothing needs configuring; to make a weekly run a bare `devpulse week`, see [Config file](#config-file-optional).
+`~/code` is whatever folder contains your repositories; if they live in several places, list them all: `devpulse week ~/code ~/work`. devpulse finds every repo below them and counts the commits made with each repo's configured `user.email`. Nothing needs configuring; to make a weekly run a bare `devpulse week`, see [Config file](#config-file-optional).
 
 To try it without pointing it at real work:
 
@@ -36,10 +36,10 @@ devpulse year /tmp/devpulse-demo --open
 
 | Command | What you get |
 | --- | --- |
-| `devpulse week [PATH]` | This ISO week, Monday to Sunday |
-| `devpulse month [PATH]` | This calendar month |
-| `devpulse year [PATH]` | This calendar year as a wrapped-style recap: busiest month, top project, biggest day, your rhythm, and a day-by-day calendar |
-| `devpulse standup [PATH]` | Bullets for your last active day and for today, ready to paste |
+| `devpulse week [PATH ...]` | This ISO week, Monday to Sunday |
+| `devpulse month [PATH ...]` | This calendar month |
+| `devpulse year [PATH ...]` | This calendar year as a wrapped-style recap: busiest month, top project, biggest day, your rhythm, and a day-by-day calendar |
+| `devpulse standup [PATH ...]` | Bullets for your last active day and for today, ready to paste |
 
 Options for `week`, `month` and `year`:
 
@@ -60,6 +60,8 @@ Options for every command:
 | `--date YYYY-MM-DD` | Report on the week, month or year that contains this day. For `standup`, the day to treat as today |
 | `--depth N` | How many folder levels below `PATH` to search for repos (default 3) |
 | `--exclude GLOB` | Skip every folder below `PATH` whose name or relative path matches, with all it contains: `forks`, `forks/*`, `client-*`. Case-sensitive. Repeat it for more patterns |
+
+`PATH` defaults to the current folder. Give several folders to review them as one: a repo reached through two of them is read once, and two repos with the same folder name are told apart by their path (`code/api`, `work/api`).
 
 Files are named after the period: `devpulse-2026-W47.md`, `devpulse-2026-11.html`, `devpulse-2026.json`.
 
@@ -182,7 +184,7 @@ Shares are fractions (`0.1765`, not `18%`), times are ISO 8601 with the commit's
 Put the flags you would type every week in `~/.config/devpulse/config.toml` (or `$XDG_CONFIG_HOME/devpulse/config.toml`; set `DEVPULSE_CONFIG` to use another file). The same place is used on Windows, below your user folder. `devpulse --help` prints the path it looks at.
 
 ```toml
-path = "~/code"                               # default PATH
+path = ["~/code", "~/work"]                   # default PATH; one folder can be a plain string
 authors = ["ada@example.com", "ada@work.example"]  # like --author, repeated
 exclude = ["forks", "client-*"]               # like --exclude
 depth = 3

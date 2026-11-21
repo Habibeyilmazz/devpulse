@@ -16,7 +16,7 @@ else:
 
 # key: (type the value must have, whether it names a path)
 KEYS: dict[str, tuple[type, bool]] = {
-    "path": (str, True),
+    "path": (list, True),  # a single string is read as a list of one
     "authors": (list, False),
     "exclude": (list, False),
     "depth": (int, False),
@@ -56,14 +56,20 @@ def load(file: Path | None = None) -> dict:
         if key not in KEYS:
             raise ConfigError(f"{file}: unknown setting {key!r} (known: {', '.join(KEYS)})")
         kind, is_path = KEYS[key]
+        if key == "path" and isinstance(value, str):
+            value = [value]
         # bool is an int to Python, but `depth = true` is a mistake
         if not isinstance(value, kind) or isinstance(value, bool) or (kind is list and not all(
             isinstance(v, str) and v for v in value
-        )):  # fmt: skip
+        )) or (key == "path" and not value):  # fmt: skip
             want = {str: "a string", int: "a whole number", list: "a list of non-empty strings"}[kind]
+            want = "a folder or a list of folders" if key == "path" else want
             raise ConfigError(f"{file}: {key} must be {want}")
         if key == "depth" and value < 0:
             raise ConfigError(f"{file}: depth must be 0 or more")
         # a relative path means relative to the config file, not to wherever devpulse is run from
-        settings[key] = file.parent / Path(value).expanduser() if is_path else value
+        if is_path:
+            paths = [file.parent / Path(v).expanduser() for v in (value if kind is list else [value])]
+            value = paths if kind is list else paths[0]
+        settings[key] = value
     return settings

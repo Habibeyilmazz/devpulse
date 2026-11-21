@@ -44,7 +44,7 @@ def test_find_repos_accepts_a_repo_as_root(tmp_path):
 def test_repo_names_disambiguate_duplicates(tmp_path):
     root = tmp_path.resolve()
     repos = [root / "work" / "api", root / "home" / "api", root / "web"]
-    assert list(repo_names(tmp_path, repos).values()) == ["work/api", "home/api", "web"]
+    assert list(repo_names(repos).values()) == ["work/api", "home/api", "web"]
 
 
 def test_is_ignored():

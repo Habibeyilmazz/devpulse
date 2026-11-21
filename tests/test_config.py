@@ -1,5 +1,7 @@
 """The config file: where it is looked up, what it accepts, and how the command line overrides it."""
 
+import json
+
 import pytest
 
 from conftest import BOB, make_repo
@@ -32,7 +34,7 @@ def test_no_file_is_no_settings_unless_named(tmp_path, monkeypatch):
 def test_paths_are_relative_to_the_file_and_expand_home(tmp_path):
     file = write_config(tmp_path, 'path = "code"\nmd = "~/vault/Reviews"\nauthors = ["ada@"]\ndepth = 2\n')
     assert config.load() == {
-        "path": file.parent / "code",
+        "path": [file.parent / "code"],
         "md": tmp_path / "vault" / "Reviews",
         "authors": ["ada@"],
         "depth": 2,
@@ -49,6 +51,8 @@ def test_paths_are_relative_to_the_file_and_expand_home(tmp_path):
         ("depth = true", "depth must be a whole number"),
         ("depth = -1", "depth must be 0 or more"),
         ("md = 3", "md must be a string"),
+        ("path = []", "path must be a folder or a list of folders"),
+        ('path = ["code", 3]', "path must be a folder or a list of folders"),
     ],
 )
 def test_bad_settings_are_named(tmp_path, capsys, text, message):
@@ -101,3 +105,11 @@ def test_a_notepad_file_with_a_byte_order_mark_loads_and_a_binary_one_is_named(t
     file.write_bytes(b"depth = \xff\xfe\n")
     with pytest.raises(config.ConfigError, match="c.toml"):
         config.load(file)
+
+
+def test_path_can_list_several_folders(tmp_path, capsys):
+    root = workspace(tmp_path)
+    write_config(tmp_path, f'path = ["{(root / "api").as_posix()}", "{(root / "clients").as_posix()}"]\n')
+
+    assert cli.main(["week", "--date", "2026-03-10", "--json", "-"]) == 0
+    assert [p["name"] for p in json.loads(capsys.readouterr().out)["projects"]] == ["api", "web"]
