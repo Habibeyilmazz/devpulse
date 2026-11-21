@@ -12,6 +12,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 SKIP_DIRS = {"node_modules", "venv", "site-packages", "__pycache__"}  # big, and never where you keep repos
@@ -60,14 +61,25 @@ def is_ignored(path: str) -> bool:
     return parts[-1] in IGNORED_NAMES or path.endswith(IGNORED_SUFFIXES) or not IGNORED_PARTS.isdisjoint(parts[:-1])
 
 
-def find_repos(root: Path, depth: int = 3) -> list[Path]:
+def is_excluded(rel: str, patterns: list[str]) -> bool:
+    """`rel` is a folder's path below the root, with `/`. A pattern matches the whole path or the folder name."""
+    name = rel.rsplit("/", 1)[-1]
+    return any(fnmatchcase(rel, p.strip("/")) or fnmatchcase(name, p.strip("/")) for p in patterns)
+
+
+def find_repos(root: Path, depth: int = 3, exclude: list[str] = ()) -> list[Path]:
     """Return every git work tree at most `depth` folders below `root` (root itself is level 0).
 
-    The walk continues inside a repo, so nested repos and submodules are found too.
+    The walk continues inside a repo, so nested repos and submodules are found too. A folder that
+    matches an `exclude` glob is skipped with everything below it.
     """
     root = Path(root).expanduser().resolve()
     repos: list[Path] = []
     for dirpath, dirnames, filenames in os.walk(root):  # does not follow symlinks
+        rel = Path(dirpath).relative_to(root).as_posix()
+        if rel != "." and is_excluded(rel, exclude):
+            dirnames[:] = []
+            continue
         # `.git` is a file in linked work trees and submodules
         if ".git" in dirnames or ".git" in filenames:
             repos.append(Path(dirpath))

@@ -20,6 +20,19 @@ def test_find_repos_prunes_and_limits_depth(tmp_path):
     assert [p.name for p in find_repos(tmp_path, depth=4)] == ["a", "b", "sub", "worktree", "w"]
 
 
+def test_find_repos_excludes_by_name_or_path(tmp_path):
+    for rel in ["a/.git", "forks/b/.git", "forks/b/sub/.git", "work/client-x/.git", "work/api/.git"]:
+        (tmp_path / rel).mkdir(parents=True)
+
+    def found(*patterns):
+        return [p.relative_to(tmp_path.resolve()).as_posix() for p in find_repos(tmp_path, exclude=list(patterns))]
+
+    assert found("forks") == ["a", "work/api", "work/client-x"]  # a folder takes everything below it
+    assert found("forks/*", "client-*") == ["a", "work/api"]  # a path glob, and a name glob at any level
+    assert found("work/api/") == ["a", "forks/b", "forks/b/sub", "work/client-x"]
+    assert found("Forks") == found()  # case-sensitive on every platform
+
+
 def test_find_repos_accepts_a_repo_as_root(tmp_path):
     (tmp_path / ".git").mkdir()
     assert find_repos(tmp_path) == [tmp_path.resolve()]
