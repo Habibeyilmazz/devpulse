@@ -79,6 +79,14 @@ def test_last_month_year_and_explicit_author(tmp_path, capsys):
 
     assert cli.main(["year", str(root), "--date", "2026-12-31", "--html", str(tmp_path)]) == 0
     assert "Your 2026 in code" in (tmp_path / "devpulse-2026.html").read_text(encoding="utf-8")
+    capsys.readouterr()
+
+    assert cli.main(["quarter", str(root), "--date", "2026-03-10", "--md", str(tmp_path)]) == 0
+    out = capsys.readouterr().out
+    assert "quarterly review" in out and "Q1 2026" in out and "Per week" in out and "Tidy README" in out
+    md = (tmp_path / "devpulse-2026-Q1.md").read_text(encoding="utf-8")
+    assert 'type: "quarterly-review"' in md and "previous: [[devpulse-2025-Q4]]" in md
+    assert "Add health endpoint" in md and "commits: 5" in md
 
 
 def test_standup(tmp_path, capsys):

@@ -59,9 +59,8 @@ def print_report(r: Report, console: Console) -> None:
 
     by_hour = [sum(row[h] for row in r.heat) for h in range(24)]
     console.print(f"\n[dim]Hours 00–23[/dim]  [blue]{spark(by_hour)}[/blue]")
-    console.print(
-        f"[dim]{'Per month  ' if p.kind == 'year' else 'Per day    '}[/dim]  [blue]{spark([n for _, n in r.columns])}[/blue]\n"
-    )
+    per = {"year": "Per month  ", "quarter": "Per week   "}.get(p.kind, "Per day    ")
+    console.print(f"[dim]{per}[/dim]  [blue]{spark([n for _, n in r.columns])}[/blue]\n")
 
     table = Table(box=None, pad_edge=False, header_style="dim")
     table.add_column("Project")

@@ -51,10 +51,26 @@ def test_month_and_year_periods():
         period_for("decade", MON)
 
 
+@pytest.mark.parametrize(
+    "day, start, end, label",
+    [
+        (date(2026, 1, 1), date(2026, 1, 1), date(2026, 3, 31), "2026-Q1"),
+        (date(2024, 5, 31), date(2024, 4, 1), date(2024, 6, 30), "2024-Q2"),
+        (date(2026, 9, 30), date(2026, 7, 1), date(2026, 9, 30), "2026-Q3"),
+        (date(2026, 12, 31), date(2026, 10, 1), date(2026, 12, 31), "2026-Q4"),
+    ],
+)
+def test_quarter_periods(day, start, end, label):
+    q = period_for("quarter", day)
+    assert (q.start, q.end, q.label, q.title) == (start, end, label, f"Q{label[-1]} {label[:4]}")
+    assert period_for("quarter", date(2026, 2, 1)).previous().label == "2025-Q4"
+
+
 def test_window_start_reaches_back_over_the_trend():
     assert window_start(period_for("week", MON)) == date(2026, 1, 19)  # 7 weeks earlier
     assert window_start(period_for("month", MON)) == date(2025, 10, 1)
     assert window_start(period_for("year", MON)) == date(2024, 1, 1)
+    assert window_start(period_for("quarter", MON)) == date(2025, 4, 1)  # the 3 quarters before Q1 2026
 
 
 def test_language_of():
@@ -172,6 +188,16 @@ def test_month_and_year_columns():
     recap = dict(facts(year))
     assert recap["Busiest month"] == "Mar (3 commits)" and recap["Your rhythm"].startswith("Weekend warrior (50%")
     assert "Busiest month" not in dict(facts(month))
+
+
+def test_quarter_columns_are_weeks_named_by_their_first_day_in_the_quarter():
+    commits = [c("2026-01-01 10:00"), c("2026-01-04 10:00"), c("2026-01-05 10:00"), c("2026-03-31 10:00")]
+    q = build_report(commits, period_for("quarter", MON), today=date(2026, 4, 1), repos_scanned=1)
+    # 1 Jan 2026 is a Thursday: the first column is that short week, then one per Monday to 30 Mar
+    assert q.columns[:2] == [("1 Jan", 2), ("5 Jan", 1)] and q.columns[-1] == ("30 Mar", 1)
+    assert len(q.columns) == 14 and sum(n for _, n in q.columns) == 4 and len(q.per_day) == 90
+    assert [p.label for p, _ in q.trend] == ["2025-Q2", "2025-Q3", "2025-Q4", "2026-Q1"]
+    assert dict(facts(q))["vs previous quarter"] == "no baseline"
 
 
 def test_empty_report_has_safe_defaults():

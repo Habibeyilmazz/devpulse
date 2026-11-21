@@ -175,7 +175,7 @@ def _heat(r: Report) -> str:
 
 
 def _calendar(r: Report) -> str:
-    """The year as two half-year grids: side by side they read as one, on a phone they stack."""
+    """A quarter as one grid; a year as two half-year grids: side by side they read as one, on a phone they stack."""
     top = max(r.per_day.values())
     day = r.period.start - timedelta(days=r.period.start.weekday())
     # a grid's first column: a blank corner, then a label on every other weekday row
@@ -197,7 +197,8 @@ def _calendar(r: Report) -> str:
         weeks.append("".join(cells))
         day += timedelta(days=7)
     half = (len(weeks) + 1) // 2
-    grids = "".join(f'<div class="cal">{labels}{"".join(part)}</div>' for part in (weeks[:half], weeks[half:]))
+    parts = (weeks[:half], weeks[half:]) if r.period.kind == "year" else (weeks,)
+    grids = "".join(f'<div class="cal">{labels}{"".join(part)}</div>' for part in parts)
     return f'<div class="cals" role="img" aria-label="Commits on each day of {r.period.title}.">{grids}</div>{_scale()}'
 
 
@@ -233,7 +234,7 @@ def _activity(r: Report) -> str:
 
 
 def _short(p: Period) -> str:
-    return {"week": p.label[5:], "month": f"{p.start:%b}", "year": p.label}[p.kind]
+    return {"week": p.label[5:], "month": f"{p.start:%b}", "quarter": p.label[5:], "year": p.label}[p.kind]
 
 
 def _trend(r: Report) -> str:
@@ -392,14 +393,13 @@ def render(r: Report, generated: date) -> str:
                     _calendar(r),
                 )
             )
+        days_note = f"{r.active_days} of {len(r.per_day)} days had at least one commit."
         cards += [
             _card("w7", "When you commit", "Commits by weekday and hour, in each commit's own time zone.", _heat(r)),
-            _card(
-                "w5",
-                "Commits per month" if kind == "year" else "Commits per day",
-                f"{r.active_days} of {len(r.per_day)} days had at least one commit.",
-                _activity(r),
-            ),
+            # a quarter's 90-odd days are too many bars; its calendar fits the same card
+            _card("w5", "Commits per day", f"{days_note} One square per day, one column per week.", _calendar(r))
+            if kind == "quarter"
+            else _card("w5", "Commits per month" if kind == "year" else "Commits per day", days_note, _activity(r)),
             _card(
                 "w6",
                 "Projects",

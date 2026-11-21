@@ -100,14 +100,18 @@ def test_dashboard_is_self_contained_and_escapes_everything():
 
 
 def test_dashboard_renders_every_period_kind_and_the_empty_case():
-    for kind in ("week", "month", "year"):
+    for kind in ("week", "month", "quarter", "year"):
         page = dashboard.render(report(kind, today=date(2026, 12, 31)), date(2026, 12, 31))
         assert f"{kind}ly review" in page
-        assert page.count('class="cal"') == (2 if kind == "year" else 0)  # the year as two half-year grids
+        # the year as two half-year grids, a quarter as one in place of 90-odd day columns
+        assert page.count('class="cal"') == {"year": 2, "quarter": 1}.get(kind, 0)
     assert 'class="later"' not in page  # the year is over: no day is still to come
     year = dashboard.render(report("year"), MON)
     assert year.count('class="later"') == (date(2026, 12, 31) - date(2026, 3, 20)).days and "still to come" in year
     assert "Your 2026 in code" in year and "Busiest month" in year and "Your rhythm" in year
+    quarter = dashboard.render(report("quarter"), MON)
+    assert "Q1 2026" in quarter and "Quarter over quarter" in quarter and ">Q1</span>" in quarter
+    assert "One square per day" in quarter and 'class="cols"' in quarter  # the trend is still columns
     empty = build_report([], period_for("week", MON), MON, repos_scanned=4)
     page = dashboard.render(empty, MON)
     assert "No commits in this period" in page and "4 repos" in page and "in this week (9 Mar – 15 Mar 2026)" in page

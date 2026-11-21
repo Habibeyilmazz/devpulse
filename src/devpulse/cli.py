@@ -1,4 +1,4 @@
-"""Command line entry point: devpulse week | month | year | standup."""
+"""Command line entry point: devpulse week | month | quarter | year | standup."""
 
 from __future__ import annotations
 
@@ -185,16 +185,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--date",
         type=day,
         metavar="YYYY-MM-DD",
-        help="report on the week, month, year or standup day that contains this day (default: today)",
+        help="report on the week, month, quarter, year or standup day that contains this day (default: today)",
     )
     common.add_argument(
         "--depth", type=depth, help="how many folder levels below PATH to search for repos (default: 3)"
     )
 
-    sub = parser.add_subparsers(dest="command", required=True, metavar="{week,month,year,standup}")
+    sub = parser.add_subparsers(dest="command", required=True, metavar="{week,month,quarter,year,standup}")
     helps = {
         "week": "this ISO week, Monday to Sunday",
         "month": "this calendar month",
+        "quarter": "this calendar quarter (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)",
         "year": "this calendar year, as a wrapped-style recap",
     }
     for kind, text in helps.items():

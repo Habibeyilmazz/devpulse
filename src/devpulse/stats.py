@@ -12,7 +12,7 @@ from devpulse.gitlog import Commit
 SESSION_GAP_MIN = 90  # a longer silence between commits starts a new focus session
 SESSION_LEAD_MIN = 30  # assumed work before the first commit of a session
 LATE_FROM, LATE_UNTIL = 22, 5  # late night is 22:00-04:59 in the commit's own time zone
-TREND_PERIODS = {"week": 8, "month": 6, "year": 3}
+TREND_PERIODS = {"week": 8, "month": 6, "quarter": 4, "year": 3}
 
 LANGUAGES = {
     "py": "Python", "pyi": "Python", "ipynb": "Jupyter", "js": "JavaScript", "mjs": "JavaScript",
@@ -39,16 +39,18 @@ def language_of(path: str) -> str:
 
 @dataclass(frozen=True)
 class Period:
-    kind: str  # "week" | "month" | "year"
+    kind: str  # "week" | "month" | "quarter" | "year"
     start: date
     end: date  # inclusive
 
     @property
     def label(self) -> str:
-        """Sortable id, also the report file name: 2026-W47, 2026-11, 2026."""
+        """Sortable id, also the report file name: 2026-W47, 2026-11, 2026-Q4, 2026."""
         if self.kind == "week":
             iso = self.start.isocalendar()
             return f"{iso[0]}-W{iso[1]:02d}"
+        if self.kind == "quarter":
+            return f"{self.start:%Y}-Q{(self.start.month + 2) // 3}"
         return f"{self.start:%Y-%m}" if self.kind == "month" else f"{self.start:%Y}"
 
     @property
@@ -56,6 +58,8 @@ class Period:
         if self.kind == "week":
             iso = self.start.isocalendar()
             return f"Week {iso[1]}, {iso[0]}"
+        if self.kind == "quarter":
+            return f"Q{(self.start.month + 2) // 3} {self.start:%Y}"
         return f"{self.start:%B %Y}" if self.kind == "month" else f"{self.start:%Y}"
 
     @property
@@ -71,12 +75,16 @@ class Period:
 
 
 def period_for(kind: str, day: date) -> Period:
-    """The ISO week (Mon-Sun), calendar month or calendar year that contains `day`."""
+    """The ISO week (Mon-Sun), calendar month, calendar quarter or calendar year that contains `day`."""
     if kind == "week":
         start = day - timedelta(days=day.weekday())
         return Period(kind, start, start + timedelta(days=6))
     if kind == "month":
         return Period(kind, day.replace(day=1), day.replace(day=calendar.monthrange(day.year, day.month)[1]))
+    if kind == "quarter":
+        first = day.month - (day.month - 1) % 3
+        last = first + 2
+        return Period(kind, date(day.year, first, 1), date(day.year, last, calendar.monthrange(day.year, last)[1]))
     if kind == "year":
         return Period(kind, date(day.year, 1, 1), date(day.year, 12, 31))
     raise ValueError(f"unknown period: {kind}")
@@ -250,6 +258,11 @@ def build_report(commits: list[Commit], period: Period, today: date, repos_scann
     if period.kind == "year":
         months = Counter(c.day.month for c in inside)
         columns = [(calendar.month_abbr[m], months[m]) for m in range(1, 13)]
+    elif period.kind == "quarter":  # 90-odd days are too many bars: one per week, named by its first day here
+        weeks: Counter[date] = Counter()
+        for d, n in per_day.items():
+            weeks[max(d - timedelta(days=d.weekday()), period.start)] += n
+        columns = [(f"{d.day} {d:%b}", n) for d, n in weeks.items()]
     else:
         columns = [(f"{d:%a}" if period.kind == "week" else str(d.day), n) for d, n in per_day.items()]
 

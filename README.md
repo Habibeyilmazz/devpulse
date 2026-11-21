@@ -38,10 +38,11 @@ devpulse year /tmp/devpulse-demo --open
 | --- | --- |
 | `devpulse week [PATH ...]` | This ISO week, Monday to Sunday |
 | `devpulse month [PATH ...]` | This calendar month |
+| `devpulse quarter [PATH ...]` | This calendar quarter (January to March, and so on): commits per week, a day-by-day calendar, and the last four quarters side by side. Made for performance reviews and OKR check-ins |
 | `devpulse year [PATH ...]` | This calendar year as a wrapped-style recap: busiest month, top project, biggest day, your rhythm, and a day-by-day calendar |
 | `devpulse standup [PATH ...]` | Bullets for your last active day and for today, ready to paste |
 
-Options for `week`, `month` and `year`:
+Options for `week`, `month`, `quarter` and `year`:
 
 | Option | Effect |
 | --- | --- |
@@ -49,7 +50,7 @@ Options for `week`, `month` and `year`:
 | `--html PATH` | Write the HTML dashboard to a `.html` file or a folder |
 | `--json PATH` | Write the numbers and every commit as JSON to a `.json` file or a folder. `--json -` prints the JSON instead of the report. See [As JSON](#as-json) |
 | `--open` | Open the dashboard in your browser (in a temp folder if `--html` is not given) |
-| `--last` | Report on the previous week, month or year |
+| `--last` | Report on the previous week, month, quarter or year |
 | `--ai` | Add a narrative summary written by Claude. See [AI summary](#ai-summary-optional) |
 
 Options for every command:
@@ -57,13 +58,13 @@ Options for every command:
 | Option | Effect |
 | --- | --- |
 | `--author NAME_OR_EMAIL` | Count commits whose author contains this text instead of the repo's `user.email`. Repeat it if you commit under several identities |
-| `--date YYYY-MM-DD` | Report on the week, month or year that contains this day. For `standup`, the day to treat as today |
+| `--date YYYY-MM-DD` | Report on the week, month, quarter or year that contains this day. For `standup`, the day to treat as today |
 | `--depth N` | How many folder levels below `PATH` to search for repos (default 3) |
 | `--exclude GLOB` | Skip every folder below `PATH` whose name or relative path matches, with all it contains: `forks`, `forks/*`, `client-*`. Case-sensitive. Repeat it for more patterns |
 
 `PATH` defaults to the current folder. Give several folders to review them as one: a repo reached through two of them is read once, and two repos with the same folder name are told apart by their path (`code/api`, `work/api`).
 
-Files are named after the period: `devpulse-2026-W47.md`, `devpulse-2026-11.html`, `devpulse-2026.json`.
+Files are named after the period: `devpulse-2026-W47.md`, `devpulse-2026-11.html`, `devpulse-2026-Q4.md`, `devpulse-2026.json`.
 
 ### In the terminal
 
@@ -188,7 +189,7 @@ path = ["~/code", "~/work"]                   # default PATH; one folder can be 
 authors = ["ada@example.com", "ada@work.example"]  # like --author, repeated
 exclude = ["forks", "client-*"]               # like --exclude
 depth = 3
-md = "~/vault/Reviews"                        # write the note on every week, month and year run
+md = "~/vault/Reviews"                        # write the note on every week, month, quarter and year run
 html = "~/Reports/devpulse"                   # and the dashboard
 json = "~/Reports/devpulse"                   # and the JSON data
 ```
@@ -205,7 +206,7 @@ A flag on the command line wins over the file: `devpulse week ~/other --author b
 - **Languages** by added plus deleted lines, from file extensions.
 - **Focus sessions**: commits less than 90 minutes apart, across all repos, are one session; 30 minutes are added for the work before its first commit. It is an estimate of rhythm, not a time sheet.
 - **Biggest days**, **late-night share** (22:00 to 05:00), **weekend share**, **peak hour**.
-- **Trend**: the last 8 weeks, 6 months or 3 years side by side.
+- **Trend**: the last 8 weeks, 6 months, 4 quarters or 3 years side by side.
 
 ## How it works
 
@@ -216,7 +217,7 @@ Details worth knowing:
 - Only commits on local branches (and `HEAD`) are read. Merge commits are skipped. A commit that exists twice because it was cherry-picked or rebased is counted once, and so is one that shows up in several linked work trees or clones of the same repo.
 - If `PATH` holds no repos but is itself inside one, that repo is used. So plain `devpulse week` works from anywhere in a project.
 - Lock files, minified files and vendored or build folders are left out of line counts, since they are not lines you wrote. A moved or renamed file counts for the lines edited in it, not as a whole file deleted and added.
-- History is read back as far as the trend needs (8 weeks, 6 months or 3 years). A current streak that reaches that edge is shown with a plus sign, for example `56+ days`.
+- History is read back as far as the trend needs (8 weeks, 6 months, 4 quarters or 3 years). A current streak that reaches that edge is shown with a plus sign, for example `56+ days`.
 - A week that is not over is compared with the full previous week and marked "so far".
 - `git log` runs with external diff drivers, text converters, signature checks, credential prompts, lazy fetching and every git transport switched off, which closes the usual ways a repository's own config can make git start other programs or reach the network. A test reads a repository whose config names a command for each of these and checks that none runs.
 - Control characters and bidi overrides in commit subjects and folder names are shown as `�`, so a subject cannot send escape sequences to your terminal (retitle it, clear it, fake a link or write the clipboard).

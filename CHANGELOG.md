@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `devpulse quarter` (round 15, feature): the calendar quarter (Q1 = January to March) in all four
+  outputs, with `--last`, `--date`, `--md`, `--html`, `--json` and `--ai` like the other periods.
+  Files are named `devpulse-2026-Q4.*`, the note's type and tag are `quarterly-review` and it links
+  to the previous quarter's note. The terminal's second sparkline is per week; the dashboard shows the
+  quarter as a one-grid day-by-day calendar beside the heatmap (90-odd day columns did not fit) and the
+  last four quarters as the trend. Picked because a performance review or OKR check-in covers a
+  quarter, and month plus year left no way to get one. Checked with Playwright at 1040, 390 and 360 px
+  (light and dark): no overflow, no console errors, no requests. No README screenshot of it yet.
 - Several folders at once (round 12, feature): `devpulse week ~/code ~/work` reviews the repos under
   every folder given as one report, and the config file's `path` takes a list (a plain string still
   works). A repo reached through two folders is read once; two repos with the same folder name are named
