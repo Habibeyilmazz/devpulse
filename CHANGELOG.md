@@ -6,6 +6,30 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+A security pass over the whole repo (round 3). Findings fixed, each with a regression test:
+
+- Commit subjects, folder names and the `--ai` text reached the terminal with their escape sequences
+  intact, so a commit subject could retitle or clear the terminal, fake an OSC 8 link or write the
+  clipboard (OSC 52). Control characters (C0 but tab, DEL, C1) and bidi overrides are now replaced
+  with `�` when the text is read (`gitlog.printable`). The AI's "one thing" is kept to one line.
+- On git older than 2.44 `GIT_NO_LAZY_FETCH` is ignored, so reading a partial clone could fetch, and
+  run the `remote.*.uploadpack` or ssh command the repo's own config names. git now runs with an empty
+  `GIT_ALLOW_PROTOCOL`, which blocks every transport on any git version; a repo's
+  `protocol.<name>.allow` cannot loosen it (it can loosen `-c protocol.allow=never`, checked by hand).
+  The test sets a command in the config for every hook-like key and checks that none runs.
+- The dashboard has a Content-Security-Policy: `default-src 'none'` and a hash for its one script.
+  Checked in Chromium: the tooltip still works, an injected inline script is blocked.
+- CI actions are pinned to commit SHAs, and the build job runs `pip-audit --strict` on the runtime
+  and `[ai]` dependencies.
+
+Checked and found fine: HTML and rich-markup escaping, YAML frontmatter quoting, `--open`'s temp
+folder (`mkdtemp`, private), `os.walk` not following symlinks, no secrets or personal addresses in the
+git history, `pip-audit` clean locally, workflow permissions already `contents: read`. Not changed:
+a commit subject in the Markdown note can still hold Markdown, HTML or an Obsidian plugin query
+(Obsidian sanitizes HTML; Dataview inline JS is off by default); escaping it would mangle backticks.
+
 Changes from two passes. A first-run review: a fresh clone, the README followed to the letter (pipx,
 uvx, the demo, the development setup), and a read of the whole codebase. Then a design pass: every
 output looked at as rendered (dashboard at 320 to 1440 pixels, light, dark, forced colours and print;

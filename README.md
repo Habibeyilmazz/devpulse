@@ -184,12 +184,13 @@ Details worth knowing:
 - Lock files, minified files and vendored or build folders are left out of line counts, since they are not lines you wrote. A moved or renamed file counts for the lines edited in it, not as a whole file deleted and added.
 - History is read back as far as the trend needs (8 weeks, 6 months or 3 years). A current streak that reaches that edge is shown with a plus sign, for example `56+ days`.
 - A week that is not over is compared with the full previous week and marked "so far".
-- `git log` runs with external diff drivers, text converters, signature checks, credential prompts and lazy fetching switched off, which closes the usual ways a repository's own config can make git start other programs or reach the network. (Switching off lazy fetching in partial clones needs git 2.44 or newer.)
+- `git log` runs with external diff drivers, text converters, signature checks, credential prompts, lazy fetching and every git transport switched off, which closes the usual ways a repository's own config can make git start other programs or reach the network. A test reads a repository whose config names a command for each of these and checks that none runs.
+- Control characters and bidi overrides in commit subjects and folder names are shown as `�`, so a subject cannot send escape sequences to your terminal (retitle it, clear it, fake a link or write the clipboard).
 - History is cut off with `git log --since`, which looks at the commit date. A commit whose commit date is far older than its author date can therefore be missed.
 
 ## Privacy
 
-Everything runs on your machine, from the history that is already there: devpulse never fetches. The dashboard makes no network requests and embeds no fonts, scripts or trackers from elsewhere; a test enforces that. The only code path that touches the network is `--ai`, and only when you pass it.
+Everything runs on your machine, from the history that is already there: devpulse never fetches. The dashboard makes no network requests and embeds no fonts, scripts or trackers from elsewhere; a test enforces that, and the page's Content-Security-Policy makes the browser refuse any request and any script but its own. The only code path that touches the network is `--ai`, and only when you pass it.
 
 ## AI summary (optional)
 
