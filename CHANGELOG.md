@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Performance and accessibility pass (round 8, lens "perf-a11y"). Measured on 4 synthetic repos, 1,500
+  days, about 1,400 commits in the year (`scripts/demo_repos.py --days 1500`): `devpulse --help` 0.26 s;
+  `year` 8.5 s, all of it waiting on `git log --numstat` (Python itself under 0.3 s). Repos are now read
+  in parallel threads (up to 8), in the same order, so the output is byte-identical: `year` 3.8 s.
+  Single huge repos stay git-bound; there is nothing left to win in Python.
+- Dashboard (year, 2,400 nodes, 84 KB): no console errors, no horizontal scroll at 360 px, one h1 and
+  one main, every control named. Fixed: the `<summary>` toggles were 22.5 px tall, under the WCAG 2.2
+  24 px target size; they are now 30 px. No Lighthouse or axe run (not installed); checked with a
+  Playwright script. Nothing unused to delete: ruff is clean and there are two runtime dependencies.
+
 ### Added
 
 - `--json PATH` for `week`, `month` and `year` (round 7, feature): the report as data, with raw

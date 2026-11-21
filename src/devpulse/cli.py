@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import webbrowser
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -39,11 +40,17 @@ def collect(
     commits: dict[str, Commit] = {}
     unknown, broken = [], []
     matched: dict[str, None] = {}  # an ordered set
-    for repo in repos:
+    def read(repo: Path) -> tuple[list[str], list[Commit]]:
         who = authors or [a for a in [configured_author(repo)] if a]
+        return who, read_commits(repo, names[repo], who, since) if who else []
+
+    # git does the work, so threads overlap it; map keeps repo order, which decides who owns a shared sha
+    with ThreadPoolExecutor(max_workers=min(8, len(repos))) as pool:
+        results = list(pool.map(read, repos))
+    for repo, (who, found) in zip(repos, results, strict=True):
         matched.update(dict.fromkeys(who))
         if who:
-            for c in read_commits(repo, names[repo], who, since):
+            for c in found:
                 commits.setdefault(c.sha, c)  # a linked work tree or second clone lists the same commits again
         elif enclosing_repo(repo):
             unknown.append(names[repo])

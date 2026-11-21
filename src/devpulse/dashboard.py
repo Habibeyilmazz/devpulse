@@ -100,7 +100,7 @@ tr:first-child th{border-top:0;padding-top:0}
 td.n,th.n{font-variant-numeric:tabular-nums;white-space:nowrap}
 details{border-top:1px solid var(--grid);padding:10px 0}
 details:first-of-type{border-top:0}
-summary{cursor:pointer;font-weight:600}
+summary{cursor:pointer;font-weight:600;padding:4px 0}
 summary span{font-weight:400;color:var(--ink2);margin-left:8px;font-size:13px}
 details ul{margin:8px 0 4px;padding-left:20px;color:var(--ink2);columns:2 320px;column-gap:40px}
 details li{break-inside:avoid}
