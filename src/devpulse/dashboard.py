@@ -16,47 +16,58 @@ MAX_ROWS = 8  # bars per list before the rest folds into one row
 MAX_SUBJECTS = 50
 
 CSS = """
-:root{color-scheme:light;--plane:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;
---grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);--accent:#2a78d6;--rest:#c3c2b7;
+:root{color-scheme:light;--plane:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#6f6e68;
+--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);--accent:#2a78d6;--rest:#94938a;
 --q0:#eeede8;--q1:#b7d3f6;--q2:#86b6ef;--q3:#5598e7;--q4:#256abf;--q5:#104281}
 @media (prefers-color-scheme:dark){:root{color-scheme:dark;--plane:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;
 --ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--accent:#3987e5;
---rest:#52514e;--q0:#262624;--q1:#0d366b;--q2:#184f95;--q3:#256abf;--q4:#5598e7;--q5:#9ec5f4}}
+--rest:#6b6a66;--q0:#262624;--q1:#184f95;--q2:#256abf;--q3:#3d82d6;--q4:#6ba6ea;--q5:#a9ccf5}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--plane);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+body{margin:0;background:var(--plane);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-wrap:break-word}
 main{max-width:1120px;margin:0 auto;padding:32px 16px 48px}
 h1{font-size:clamp(28px,5vw,40px);line-height:1.1;margin:4px 0 6px;letter-spacing:-.02em}
 h2{font-size:15px;font-weight:600;margin:0 0 2px}
 p{margin:0}
-.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.eyebrow{font-size:13px;color:var(--ink2)}
+.eyebrow b{color:var(--ink);font-weight:650;margin-right:.4em}
+code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-wrap:normal}
 .sub{color:var(--ink2)}
 .note{color:var(--ink2);font-size:13px;margin-bottom:14px}
 .grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;margin-top:16px}
 .card{grid-column:span 12;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;min-width:0}
 @media (min-width:860px){.w7{grid-column:span 7}.w6{grid-column:span 6}.w5{grid-column:span 5}}
-.hero{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:center}
-.figure{font-size:clamp(56px,10vw,84px);font-weight:650;line-height:1;letter-spacing:-.03em}
-.figure small{display:block;font-size:15px;font-weight:400;letter-spacing:0;color:var(--ink2);margin-top:8px}
+.hero{display:flex;flex-wrap:wrap;gap:20px 48px;align-items:center;margin-top:20px;padding:24px 0 8px;border-top:2px solid var(--ink)}
+.figure{font-size:clamp(64px,11vw,96px);font-weight:650;line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.figure small{display:block;font-size:15px;line-height:1.4;font-weight:400;letter-spacing:0;color:var(--ink2);margin-top:12px}
 .tiles{flex:1 1 420px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;margin:0}
+.tiles div{border-top:1px solid var(--grid);padding-top:8px}
 @media (min-width:700px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .tiles dt{font-size:12.5px;color:var(--ink2)}
-.tiles dd{margin:0;font-size:17px;font-weight:600}
+.tiles dd{margin:0;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .tiles small{display:block;font-size:12.5px;font-weight:400;color:var(--ink2)}
+.tiles div:nth-child(-n+4) small{display:inline;margin-left:4px}
 .wrapped{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px 28px;margin:0}
 .wrapped dt{font-size:12.5px;color:var(--ink2)}
 .wrapped dd{margin:2px 0 0;font-size:clamp(22px,3vw,28px);font-weight:650;letter-spacing:-.02em;line-height:1.15}
 .wrapped small{display:block;margin-top:4px;font-size:13px;font-weight:400;letter-spacing:0;color:var(--ink2)}
 .heat{display:grid;grid-template-columns:2.4rem repeat(24,minmax(0,1fr));gap:2px;align-items:center}
-.heat span,.cal span{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.heat span,.cal span{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .heat i,.cal i{display:block;aspect-ratio:1;border-radius:3px;background:var(--q0)}
+@media (max-width:480px){.heat i{aspect-ratio:auto;height:14px}}
+/* weekday labels take no height: on a phone the squares are smaller than the text and must still set the row */
+.heat span:nth-child(25n+1),.cal span:nth-child(n+2):nth-child(-n+8){display:flex;align-items:center;align-self:center;height:0;min-height:0}
 .q1{background:var(--q1)!important}.q2{background:var(--q2)!important}.q3{background:var(--q3)!important}
 .q4{background:var(--q4)!important}.q5{background:var(--q5)!important}
 .scale{display:flex;gap:3px;align-items:center;justify-content:flex-end;margin-top:12px;font-size:11px;color:var(--muted)}
 .scale i{width:11px;height:11px;border-radius:3px;background:var(--q0)}
 .scroll{overflow-x:auto}
-.cal{display:grid;grid-template-rows:auto repeat(7,minmax(0,1fr));grid-template-columns:2rem;grid-auto-flow:column;grid-auto-columns:minmax(11px,1fr);gap:2px;min-width:740px}
+.cals{display:flex;flex-direction:column;gap:14px}
+.cal{display:grid;grid-template-rows:auto repeat(7,minmax(0,1fr));grid-template-columns:2rem;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px}
 .cal i.out{background:none}
-.cal span{display:flex;align-items:center;min-height:16px;white-space:nowrap}
+.cal span{display:flex;align-items:center;min-height:16px}
+.cal span:nth-last-child(8){justify-content:flex-end}
+@media (min-width:820px){.cals{display:grid;grid-template-rows:auto repeat(7,minmax(0,1fr));grid-template-columns:2rem;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px}
+.cal{display:contents}.cal+.cal span:nth-child(-n+8){display:none}}
 .cols{display:flex;gap:2px;align-items:flex-end;border-bottom:1px solid var(--axis);height:150px}
 .cols>div{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
 .cols b{font-size:11px;font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums}
@@ -70,27 +81,37 @@ p{margin:0}
 .bars .track i{display:block;height:12px;min-width:2px;border-radius:0 4px 4px 0;background:var(--accent)}
 .bars .num{font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums;text-align:right}
 ol.big{margin:0;padding:0;list-style:none}
-ol.big li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--grid)}
+ol.big li{display:grid;grid-template-columns:auto 1fr auto;gap:2px 14px;align-items:baseline;padding:8px 0;border-top:1px solid var(--grid)}
 ol.big li:first-child{border-top:0;padding-top:0}
-ol.big span{color:var(--ink2);font-variant-numeric:tabular-nums}
+ol.big b{font-weight:600;white-space:nowrap}
+ol.big span,ol.big time{font-variant-numeric:tabular-nums;white-space:nowrap}
+ol.big span{grid-column:3;color:var(--ink2)}
+ol.big small{grid-column:1/-1;min-width:0;font-size:13px;color:var(--ink2)}
+@media (min-width:700px){ol.sessions li{grid-template-columns:7rem 8rem 1fr auto}ol.sessions small{grid-column:3;grid-row:1}ol.sessions span{grid-column:4}}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th{text-align:left;font-weight:500;color:var(--ink2);font-size:12.5px}
 th,td{padding:7px 12px 7px 0;border-top:1px solid var(--grid);vertical-align:top}
 tr:first-child th{border-top:0;padding-top:0}
 td.n,th.n{font-variant-numeric:tabular-nums;white-space:nowrap}
-table.wide{min-width:520px}
 details{border-top:1px solid var(--grid);padding:10px 0}
 details:first-of-type{border-top:0}
 summary{cursor:pointer;font-weight:600}
 summary span{font-weight:400;color:var(--ink2);margin-left:8px;font-size:13px}
-details ul{margin:8px 0 4px;padding-left:20px;color:var(--ink2)}
+details ul{margin:8px 0 4px;padding-left:20px;color:var(--ink2);columns:2 320px;column-gap:40px}
+details li{break-inside:avoid}
 details .scroll{max-height:320px;overflow:auto;margin-top:10px}
 .ai p{max-width:70ch;margin-top:8px}
 .ai .next{margin-top:14px;padding-top:12px;border-top:1px solid var(--grid)}
 footer{margin-top:24px;color:var(--muted);font-size:12.5px}
 #tip{position:fixed;left:0;top:0;z-index:9;pointer-events:none;background:var(--ink);color:var(--surface);
 font-size:12.5px;padding:5px 9px;border-radius:6px;white-space:nowrap}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.empty p{max-width:70ch;color:var(--ink2);margin-top:6px}
+.empty dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 20px;margin:14px 0 0;align-items:baseline}
+.empty dd{margin:0;color:var(--ink2)}
+@media (max-width:560px){.empty dl{grid-template-columns:1fr;gap:2px}.empty dd{margin-bottom:10px}}
+@media (forced-colors:active){.heat i,.cal i,.scale i,.cols i,.bars i{forced-color-adjust:none}}
+@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:none}.card{break-inside:avoid}#tip{display:none}}
 """
 
 # Hover text comes from data-tip attributes; the same numbers are in the tables below the charts.
@@ -129,21 +150,24 @@ def _heat(r: Report) -> str:
         for hour, n in enumerate(row):
             tip = f"{WEEKDAYS[wd]} {hour:02d}:00–{hour:02d}:59 · {plural(n, 'commit')}"
             cells.append(f'<i class="q{level(n, top)}" data-tip="{esc(tip)}"></i>')
+    busiest = WEEKDAYS[max(range(7), key=lambda wd: sum(r.heat[wd]))]
     return (
         '<div class="heat" role="img" aria-label="Commits by weekday and hour of day. '
-        f'Busiest hour starts at {r.peak_hour:02d}:00.">{"".join(cells)}</div>{_scale()}'
+        f'Busiest weekday is {busiest}, busiest hour starts at {r.peak_hour:02d}:00.">{"".join(cells)}</div>{_scale()}'
     )
 
 
 def _calendar(r: Report) -> str:
+    """The year as two half-year grids: side by side they read as one, on a phone they stack."""
     top = max(r.per_day.values())
     day = r.period.start - timedelta(days=r.period.start.weekday())
-    # first grid column: a blank corner, then a label on every other weekday row
-    cells = ["<span></span>"] + [f"<span>{name if i % 2 == 0 else ''}</span>" for i, name in enumerate(WEEKDAYS)]
+    # a grid's first column: a blank corner, then a label on every other weekday row
+    labels = "<span></span>" + "".join(f"<span>{name if i % 2 == 0 else ''}</span>" for i, name in enumerate(WEEKDAYS))
+    weeks = []
     while day <= r.period.end:
         week = [day + timedelta(days=i) for i in range(7)]
         firsts = [d for d in week if d.day == 1 and d in r.per_day]
-        cells.append(f"<span>{calendar.month_abbr[firsts[0].month]}</span>" if firsts else "<span></span>")
+        cells = [f"<span>{calendar.month_abbr[firsts[0].month]}</span>" if firsts else "<span></span>"]
         for d in week:
             if d in r.per_day:
                 n = r.per_day[d]
@@ -151,11 +175,11 @@ def _calendar(r: Report) -> str:
                 cells.append(f'<i class="q{level(n, top)}" data-tip="{esc(tip)}"></i>')
             else:
                 cells.append('<i class="out"></i>')
+        weeks.append("".join(cells))
         day += timedelta(days=7)
-    return (
-        f'<div class="scroll"><div class="cal" role="img" aria-label="Commits on each day of {r.period.title}.">'
-        f"{''.join(cells)}</div></div>{_scale()}"
-    )
+    half = (len(weeks) + 1) // 2
+    grids = "".join(f'<div class="cal">{labels}{"".join(part)}</div>' for part in (weeks[:half], weeks[half:]))
+    return f'<div class="cals" role="img" aria-label="Commits on each day of {r.period.title}.">{grids}</div>{_scale()}'
 
 
 def _columns(items: list[tuple[str, int, str]], label: str, accent_last_only: bool = False) -> str:
@@ -170,6 +194,8 @@ def _columns(items: list[tuple[str, int, str]], label: str, accent_last_only: bo
         value = f"<b>{n:,}</b>" if marked else ""
         cols.append(f'<div data-tip="{esc(tip)}">{value}{bar}</div>')
         xs.append(f"<span>{esc(x)}</span>")
+    if len(items) <= 12:  # short enough to read out; longer ones have the table below
+        label += ": " + ", ".join(f"{x} {n:,}" for x, n, _ in items)
     return (
         f'<div class="cols" role="img" aria-label="{esc(label)}">{"".join(cols)}</div>'
         f'<div class="xs" aria-hidden="true">{"".join(xs)}</div>'
@@ -216,14 +242,12 @@ def _bars(rows: list[tuple[str, int, str]], fold: str) -> str:
 def _sessions(r: Report) -> str:
     rows = []
     for s in sorted(r.sessions, key=lambda s: -s.minutes)[:5]:
+        span = f"{s.start:%H:%M}–{s.end:%H:%M}" if s.commits > 1 else f"{s.start:%H:%M}"
         rows.append(
-            f'<tr><td class="n">{fmt_day(s.start)}</td><td class="n">{s.start:%H:%M}{f"–{s.end:%H:%M}" if s.commits > 1 else ""}</td>'
-            f'<td class="n">{fmt_minutes(s.minutes)}</td><td class="n">{s.commits}</td><td>{esc(", ".join(s.repos))}</td></tr>'
+            f"<li><b>{fmt_day(s.start)}</b><time>{span}</time><span>{fmt_minutes(s.minutes)}</span>"
+            f"<small>{plural(s.commits, 'commit')} in {esc(', '.join(s.repos))}</small></li>"
         )
-    return (
-        '<div class="scroll"><table class="wide"><tr><th>Day</th><th>First to last commit</th><th>Length</th>'
-        f"<th>Commits</th><th>Projects</th></tr>{''.join(rows)}</table></div>"
-    )
+    return f'<ol class="big sessions">{"".join(rows)}</ol>'
 
 
 def _shipped(r: Report) -> str:
@@ -244,7 +268,8 @@ def _day_table(r: Report) -> str:
     rows = "".join(f'<tr><td class="n">{d.isoformat()}</td><td class="n">{n}</td></tr>' for d, n in r.per_day.items())
     return (
         "<details><summary>Commits per day as a table</summary>"
-        f'<div class="scroll"><table><tr><th>Date</th><th>Commits</th></tr>{rows}</table></div></details>'
+        f'<div class="scroll" tabindex="0" role="group" aria-label="Commits per day">'
+        f"<table><tr><th>Date</th><th>Commits</th></tr>{rows}</table></div></details>"
     )
 
 
@@ -269,19 +294,39 @@ def _card(width: str, title: str, note: str, body: str) -> str:
     return f'<section class="card {width}"><h2>{esc(title)}</h2><p class="note">{esc(note)}</p>{body}</section>'
 
 
+def _empty(r: Report) -> str:
+    """Nothing to chart: say what was searched and what to try next."""
+    kind = r.period.kind
+    who = esc(", ".join(r.authors)) if r.authors else "you"
+    tries = [
+        (f"devpulse {kind} --last", f"The {kind} before this one."),
+        (f'devpulse {kind} --author "Your Name"', "If you commit under another name or email."),
+        (f"devpulse {kind} --depth 5", "If your repos sit more than three folders below the path you gave."),
+    ]
+    rows = "".join(f"<dt><code>{esc(cmd)}</code></dt><dd>{esc(why)}</dd>" for cmd, why in tries)
+    return (
+        '<section class="card empty"><h2>No commits in this period</h2>'
+        f"<p>devpulse read {plural(r.repos_scanned, 'repo')} and found no commits by {who} "
+        f"in this {kind} ({esc(r.period.span)}).</p><dl>{rows}</dl></section>"
+    )
+
+
 def render(r: Report, generated: date) -> str:
     kind, title = r.period.kind, r.period.title
     heading = f"Your {title} in code" if kind == "year" else title
+    # "Commits" is the big figure; the year's recap lines have their own card
+    rest = [t for t in tiles(r) if t[0] not in ("Commits", "Biggest day", "Busiest month", "Your rhythm")]
+    # the first four, then the ones that carry a second line, then the rest: every grid row is one height
+    ordered = rest[:4] + [t for t in rest[4:] if t[2]] + [t for t in rest[4:] if not t[2]]
     stats = "".join(
         f"<div><dt>{esc(k)}</dt><dd>{esc(v)}{f' <small>{esc(detail)}</small>' if detail else ''}</dd></div>"
-        for k, v, detail in tiles(r)
-        if k not in ("Commits", "Biggest day", "Busiest month", "Your rhythm")  # the last two have their own card
+        for k, v, detail in ordered
     )
     hero = (
-        f'<section class="card hero"><div class="figure">{len(r.commits):,}<small>{"commit" if len(r.commits) == 1 else "commits"}'
+        f'<section class="hero"><div class="figure">{len(r.commits):,}<small>{"commit" if len(r.commits) == 1 else "commits"}'
         f' in {plural(len(r.projects), "project")}</small></div><dl class="tiles">{stats}</dl></section>'
     )
-    cards = [hero]
+    cards = []
     if r.narrative or r.improve:
         text = "".join(f"<p>{esc(p)}</p>" for p in r.narrative.split("\n\n") if p.strip())
         if r.improve:
@@ -290,11 +335,12 @@ def render(r: Report, generated: date) -> str:
             f'<section class="card ai"><h2>Summary</h2><p class="note">Written by Claude from the numbers and commit subjects in this report.</p>{text}</section>'
         )
     if not r.commits:
-        cards.append(
-            '<section class="card"><h2>No commits in this period</h2><p class="sub">'
-            f"devpulse looked at {plural(r.repos_scanned, 'repo')} and found no commits by you between "
-            f"{esc(r.period.span)}. If that is wrong, pass --author with the name or email you commit with.</p></section>"
-        )
+        hero = ""
+        cards.append(_empty(r))
+        if any(n for _, n in r.trend):
+            cards.append(
+                _card("", f"{kind.capitalize()} over {kind}", f"Commits in the last {len(r.trend)} {kind}s.", _trend(r))
+            )
     else:
         if kind == "year":
             cards.append(f'<section class="card">{_wrapped(r)}</section>')
@@ -325,7 +371,7 @@ def render(r: Report, generated: date) -> str:
             )
         )
         big = "".join(
-            f"<li>{d:%A} {d.day} {d:%B}<span>{plural(n, 'commit')} · {plural(lines, 'line')}</span></li>"
+            f"<li><b>{fmt_day(d)}</b><span>{plural(n, 'commit')} · {plural(lines, 'line')}</span></li>"
             for d, n, lines in r.biggest_days
         )
         cards += [
@@ -340,18 +386,18 @@ def render(r: Report, generated: date) -> str:
             _card(
                 "",
                 "Longest focus sessions",
-                f"A session is a run of commits with no gap over {SESSION_GAP_MIN} minutes, plus {SESSION_LEAD_MIN} minutes assumed before its first commit. An estimate, not a time sheet.",
+                f"First to last commit of a run with no gap over {SESSION_GAP_MIN} minutes. The length adds {SESSION_LEAD_MIN} minutes for the work before the first commit: an estimate, not a time sheet.",
                 _sessions(r),
             ),
             _card("", "What shipped", "Commit subjects per project, newest first.", _shipped(r) + _day_table(r)),
         ]
     return (
         '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
-        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark">'
         f'<meta name="robots" content="noindex"><title>devpulse · {esc(title)}</title><style>{CSS}</style></head>\n'
-        f'<body><main><header><p class="eyebrow">devpulse · {kind}ly review</p><h1>{esc(heading)}</h1>'
+        f'<body><main><header><p class="eyebrow"><b>devpulse</b>{kind}ly review</p><h1>{esc(heading)}</h1>'
         f'<p class="sub">{esc(r.period.span)}{" · in progress" if r.in_progress else ""}</p></header>\n'
-        f'<div class="grid">{"".join(cards)}</div>\n'
+        f'{hero}<div class="grid">{"".join(cards)}</div>\n'
         f"<footer>Generated on {generated.isoformat()} by devpulse {__version__} from local git history in "
         f"{plural(r.repos_scanned, 'repo')}. This file makes no network requests.</footer></main>\n"
         f'<div id="tip" role="tooltip" hidden></div><script>{JS}</script></body></html>\n'
