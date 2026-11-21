@@ -123,7 +123,8 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
         if len(fields) != 3:
             continue
         sha, when_text, subject = fields
-        when = datetime.fromisoformat(when_text)
+        # git writes UTC as "Z", which fromisoformat only accepts from Python 3.11
+        when = datetime.fromisoformat(when_text.replace("Z", "+00:00"))
         if when.date() < since:
             continue
         files = []
