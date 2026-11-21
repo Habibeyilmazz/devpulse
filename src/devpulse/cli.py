@@ -101,7 +101,7 @@ def run_review(args: argparse.Namespace, console: Console) -> int:
         args.html = Path(tempfile.mkdtemp(prefix="devpulse-"))
     if args.html:
         file = target(args.html, stem, ".html")
-        file.write_text(dashboard.render(report, date.today()), encoding="utf-8")
+        file.write_text(dashboard.render(report, today), encoding="utf-8")
         written.append(("HTML dashboard", file))
         if args.open:
             webbrowser.open(file.resolve().as_uri())
@@ -146,6 +146,12 @@ def author(text: str) -> str:
     return text
 
 
+def depth(text: str) -> int:
+    if not text.isdigit():
+        raise argparse.ArgumentTypeError(f"{text!r} must be a whole number, 0 or more")
+    return int(text)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="devpulse",
@@ -171,7 +177,9 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="YYYY-MM-DD",
         help="report on the week, month, year or standup day that contains this day (default: today)",
     )
-    common.add_argument("--depth", type=int, help="how many folder levels below PATH to search for repos (default: 3)")
+    common.add_argument(
+        "--depth", type=depth, help="how many folder levels below PATH to search for repos (default: 3)"
+    )
 
     sub = parser.add_subparsers(dest="command", required=True, metavar="{week,month,year,standup}")
     helps = {
