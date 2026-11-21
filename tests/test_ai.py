@@ -70,3 +70,9 @@ def test_narrate_without_credentials_uses_the_real_sdk_and_fails_cleanly(monkeyp
     monkeypatch.delenv("ANTHROPIC_PROFILE", raising=False)  # conftest clears the keys and points HOME at a temp dir
     with pytest.raises(ai.AIUnavailable, match="no API credentials"):
         ai.narrate(report())
+
+
+def test_model_text_is_cleaned_of_terminal_codes_and_next_is_one_line():
+    pytest.importorskip("anthropic")
+    client = FakeClient(text="You fixed \x1b]0;x\x07it.\n\nMore.\nNEXT: Commit\nsmaller \x1b[2Jchanges.")
+    assert ai.narrate(report(), client) == ("You fixed �]0;x�it.\n\nMore.", "Commit smaller �[2Jchanges.")

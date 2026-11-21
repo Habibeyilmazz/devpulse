@@ -7,6 +7,7 @@ with lazy fetching and prompts switched off.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -22,6 +23,15 @@ IGNORED_NAMES = {
 }  # fmt: skip
 IGNORED_SUFFIXES = (".min.js", ".min.css", ".map", ".lock")
 IGNORED_PARTS = {"node_modules", "vendor", "dist", "build", "__pycache__"}
+
+# Terminal control codes (C0 but tab, DEL, C1) and bidi overrides. A commit subject or folder name is
+# text anyone can write; printed raw, ESC sequences could retitle the terminal, clear it, fake links
+# or write the clipboard (OSC 52), and bidi overrides could reorder what is shown.
+_UNPRINTABLE = re.compile("[\x00-\x08\x0a-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]")
+
+
+def printable(text: str) -> str:
+    return _UNPRINTABLE.sub("\ufffd", text)
 
 
 @dataclass(frozen=True)
@@ -74,7 +84,7 @@ def repo_names(root: Path, repos: list[Path]) -> dict[Path, str]:
     counts: dict[str, int] = {}
     for r in repos:
         counts[r.name] = counts.get(r.name, 0) + 1
-    return {r: r.name if counts[r.name] == 1 or r == root else r.relative_to(root).as_posix() for r in repos}
+    return {r: printable(r.name if counts[r.name] == 1 or r == root else r.relative_to(root).as_posix()) for r in repos}
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -85,8 +95,16 @@ def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
         encoding="utf-8",
         errors="replace",
         # A partial clone would otherwise fetch missing blobs for --numstat: network access, and
-        # whatever ssh command the repo's config names. (GIT_NO_LAZY_FETCH needs git 2.44+.)
-        env={**os.environ, "LC_ALL": "C", "GIT_NO_LAZY_FETCH": "1", "GIT_TERMINAL_PROMPT": "0"},
+        # whatever ssh or upload-pack command the repo's config names. GIT_NO_LAZY_FETCH needs git 2.44+;
+        # an empty GIT_ALLOW_PROTOCOL blocks every transport on older git too, and unlike
+        # `-c protocol.allow=never` a repo's own `protocol.<name>.allow` cannot loosen it.
+        env={
+            **os.environ,
+            "LC_ALL": "C",
+            "GIT_NO_LAZY_FETCH": "1",
+            "GIT_ALLOW_PROTOCOL": "",
+            "GIT_TERMINAL_PROMPT": "0",
+        },
         check=False,
     )
 
@@ -124,7 +142,7 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
         "--format=%x1e%H%x1f%aI%x1f%s",
     )  # fmt: skip
     if proc.returncode != 0:
-        print(f"devpulse: skipping {repo}: {proc.stderr.strip()[:200]}", file=sys.stderr)
+        print(f"devpulse: skipping {repo}: {printable(proc.stderr.strip()[:200])}", file=sys.stderr)
         return []
     commits: dict[tuple, Commit] = {}
     for record in proc.stdout.split("\x1e")[1:]:
@@ -133,6 +151,7 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
         if len(fields) != 3:
             continue
         sha, when_text, subject = fields
+        subject = printable(subject)
         try:
             # git writes UTC as "Z", which fromisoformat only accepts from Python 3.11
             when = datetime.fromisoformat(when_text.replace("Z", "+00:00"))

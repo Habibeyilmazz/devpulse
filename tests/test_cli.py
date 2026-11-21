@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from conftest import ADA, BOB, git, lines, make_repo
+from conftest import ADA, BOB, commit, git, lines, make_repo
 from devpulse import ai, cli
 
 
@@ -198,3 +198,66 @@ def test_files_are_written_even_when_the_terminal_pipe_closes(tmp_path):
     proc.wait(timeout=60)
     proc.stderr.close()
     assert (out / "devpulse-2026-W11.md").exists() and (out / "devpulse-2026-W11.html").exists()
+
+
+def test_escape_sequences_in_subjects_and_folder_names_never_reach_the_terminal(tmp_path, capsys):
+    # A commit subject is text anyone can write: OSC 0 retitles the terminal, CSI 2J clears it,
+    # OSC 8 fakes a link, OSC 52 writes the clipboard, U+202E reorders what is shown.
+    evil = "Fix \x1b]0;pwned\x07 \x1b[2J \x1b]8;;https://example.invalid\x1b\\link\x1b]8;;\x1b\\ \x1b]52;c;cm0gLXJm\x07 ‮ok \x9b31m"
+    root = tmp_path / "code"
+    make_repo(root / "api", [("2026-03-09T09:15:00+01:00", evil, {"app.py": lines(3)})])
+    make_repo(root / "web\x1b[31m", [("2026-03-09T10:15:00+01:00", "Plain", {"a.py": lines(3)})])
+
+    for argv in (
+        ["week", str(root), "--date", "2026-03-10", "--md", str(tmp_path / "o")],
+        ["standup", str(root), "--date", "2026-03-10"],
+    ):
+        assert cli.main(argv) == 0
+        out = capsys.readouterr().out
+        assert "Fix" in out and "Plain" in out
+        assert not any(ch in out for ch in "\x1b\x07\x9b‮"), repr(out)
+    md = (tmp_path / "o" / "devpulse-2026-W11.md").read_text(encoding="utf-8")
+    assert "\x1b" not in md and "‮" not in md
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the hostile commands are POSIX shell")
+def test_a_hostile_repo_config_runs_nothing(tmp_path, capsys, monkeypatch):
+    """A repo copied from someone else carries its own .git/config; reading it must not run its commands."""
+    marker = tmp_path / "ran"
+    run = f"touch '{marker.as_posix()}'"
+    src = make_repo(tmp_path / "src", [("2026-03-09T09:15:00+01:00", "Add", {"app.py": lines(20)})])
+    commit(src, "2026-03-09T10:15:00+01:00", "Edit", {"app.py": lines(25), ".gitattributes": "*.py diff=evil\n"})
+    git(src, "config", "uploadpack.allowFilter", "true")
+    root = tmp_path / "code"
+    root.mkdir()
+    # a partial clone fetches missing blobs on demand, through whatever upload-pack command its config names
+    git(root, "clone", "-q", "--filter=blob:none", "--no-checkout", src.resolve().as_uri(), "repo")
+    repo = root / "repo"
+    for key, value in {
+        "remote.origin.uploadpack": f"{run}; git-upload-pack",
+        "protocol.file.allow": "always",
+        "protocol.allow": "always",
+        "diff.external": run,
+        "diff.evil.textconv": run,
+        "diff.evil.command": run,
+        "log.showSignature": "true",
+        "gpg.program": run,
+        "core.fsmonitor": run,
+        "core.pager": run,
+        "core.hooksPath": str(tmp_path),
+        "user.email": ADA[1],
+    }.items():
+        git(repo, "config", key, value)
+    # Prove the transport guard alone holds, as on git older than 2.44 that ignores GIT_NO_LAZY_FETCH.
+    real_run = subprocess.run
+
+    def without_lazy_fetch_switch(cmd, **kw):
+        kw["env"] = {k: v for k, v in kw["env"].items() if k != "GIT_NO_LAZY_FETCH"}
+        return real_run(cmd, **kw)
+
+    monkeypatch.setattr(subprocess, "run", without_lazy_fetch_switch)
+
+    for argv in (["week", str(root), "--date", "2026-03-10"], ["standup", str(root), "--date", "2026-03-10"]):
+        cli.main(argv)
+    capsys.readouterr()
+    assert not marker.exists()

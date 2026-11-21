@@ -163,7 +163,7 @@ def test_git_is_run_without_lazy_fetch_or_prompts(tmp_path, monkeypatch):
     real_run = gitlog.subprocess.run
     monkeypatch.setattr(gitlog.subprocess, "run", lambda *a, **kw: seen.update(kw["env"]) or real_run(*a, **kw))
     read_commits(make_repo(tmp_path / "r"), "r", [ADA[1]], SINCE)
-    assert (seen["GIT_NO_LAZY_FETCH"], seen["GIT_TERMINAL_PROMPT"]) == ("1", "0")
+    assert (seen["GIT_NO_LAZY_FETCH"], seen["GIT_ALLOW_PROTOCOL"], seen["GIT_TERMINAL_PROMPT"]) == ("1", "", "0")
 
 
 def test_configured_author(tmp_path):

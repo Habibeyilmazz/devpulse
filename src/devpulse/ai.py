@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 
+from devpulse.gitlog import printable
 from devpulse.stats import Report, facts
 
 DEFAULT_MODEL = "claude-opus-5-5"
@@ -79,4 +80,6 @@ def narrate(r: Report, client=None) -> tuple[str, str]:
     text = "".join(block.text for block in response.content if block.type == "text")
     if not text.strip():
         raise AIUnavailable("the model returned no text")
-    return split_answer(text)
+    narrative, improve = split_answer(text)
+    # The model can echo a commit subject, so its text gets the same cleaning; "NEXT" is one checkbox line.
+    return "\n".join(printable(line) for line in narrative.split("\n")), printable(" ".join(improve.split()))
