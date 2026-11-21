@@ -9,7 +9,7 @@ The screenshots show devpulse run on invented repositories made by [`scripts/dem
 
 ## Quickstart
 
-You need Python 3.10 or newer and `git`.
+You need Python 3.10 or newer and `git`. It is developed on macOS, and CI runs the tests on Linux and Windows.
 
 ```sh
 pipx install git+https://github.com/Habibeyilmazz/devpulse
@@ -102,6 +102,8 @@ Today (Fri 20 Nov)
   ...
 ```
 
+The review above is how a terminal of 100 columns or more shows it; a narrower one lists the same numbers in a single column.
+
 If you did not commit yesterday, the first block is titled "Last active day" and shows the most recent day you did, up to a week back. So on a Monday after a free weekend you get Friday.
 
 ### As an Obsidian note
@@ -191,7 +193,9 @@ devpulse week ~/code --ai --md ~/vault/Reviews
 
 With uvx, add `--with anthropic` before `--from`.
 
-`--ai` adds a short narrative and "one thing for next week" to all three outputs. It sends the headline numbers, your project names and up to 40 commit subjects per project to the Anthropic API (model `claude-opus-5-5`; set `DEVPULSE_MODEL` to change it). File names, diffs and code are never sent. Having `ANTHROPIC_API_KEY` set is not enough to trigger an upload: you have to ask with `--ai` each time. If the SDK, the key or the network is missing, devpulse says so and prints the normal report.
+`--ai` adds a short narrative and "one thing for next week" to all three outputs. It sends the headline numbers, your project names and up to 40 commit subjects per project to the Anthropic API (model `claude-opus-5-5`; set `DEVPULSE_MODEL` to change it). File names, diffs and code are never sent. Having `ANTHROPIC_API_KEY` set is not enough to trigger an upload: you have to ask with `--ai` each time. If the SDK, the key or the network is missing, devpulse says so in one line and prints the normal report.
+
+This path has been run through the real SDK against a local stub server, not yet against the live API.
 
 ## Roadmap
 

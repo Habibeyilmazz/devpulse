@@ -6,7 +6,30 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet. Ideas that are not built are listed under Roadmap in the README.
+Changes from a first-run review: a fresh clone, the README followed to the letter (pipx, uvx, the
+demo, the development setup), and a read of the whole codebase.
+
+### Fixed
+
+- `--ai` without credentials ended in a traceback instead of the report. The SDK signals missing
+  credentials with a `TypeError`, which was not caught.
+- A `~` in `PATH` that the shell did not expand (cmd.exe, PowerShell, a quoted argument) was
+  reported as "not a folder".
+- Output piped through a legacy code page (Git Bash or `> file` on Windows) crashed on the
+  sparkline characters. Such a pipe now gets UTF-8.
+- The demo script's "Now run" hint did not quote a folder with spaces.
+- Ctrl-C printed a traceback.
+
+### Changed
+
+- The headline numbers are listed in one column when the terminal is narrower than 100 columns
+  (two columns wrapped nearly every value at the default 80).
+- "No commits found" names the identity that was searched, for example
+  `No commits by ada@example.com found in 4 repo(s)`.
+
+### Added
+
+- CI runs the tests and a piped smoke run on Windows (Python 3.12, Git Bash).
 
 ## [0.1.0] - 2026-11-21
 
@@ -39,9 +62,15 @@ First release.
   `terminal.py`, `note.py`, `dashboard.py` (the three outputs), `ai.py` (the only network code),
   `cli.py` (argparse wiring). All headline numbers come from `stats.tiles()`.
 - Tests must only read repositories they create (`tests/conftest.py` isolates git config and HOME).
-- The `--ai` path is tested with a fake client only. It has not been run against the live API.
+- The `--ai` path is tested with a fake client, with the real SDK without credentials, and (by hand)
+  with the real SDK against a local stub of `/v1/messages`. It has still not been run against the
+  live API: no key was available. `--ai` is deliberately opt-in per run; a key in the environment
+  alone never triggers an upload.
 - Known limits: history is bounded with `git log --since` (commit date, see README "How it works");
-  a commit subject containing the byte 0x1E is cut at that byte; Windows is untested.
+  a commit subject containing the byte 0x1E is cut at that byte; a `.git` file that points nowhere
+  (a stale work tree) is reported as "no git identity configured" rather than as broken.
+- Windows is covered by CI only (tests plus a piped run); nobody has used it there interactively.
+- The config file and exclude patterns are still roadmap items, not built.
 - The dashboard charts are plain HTML and CSS. Colours are a single-hue sequential ramp; text never
   carries the data colour.
 
