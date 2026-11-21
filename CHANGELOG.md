@@ -17,6 +17,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Round 14 (launch): audited README, repo description/topics, CONTRIBUTING and issue templates; all present and accurate. Verified the README quickstart by installing from the GitHub URL into a clean venv and running `devpulse year` on the demo repos. No changes needed. Still unverified: pipx/uvx, Obsidian rendering, Windows UNC gitdir, a live `--ai` call. `week -- -dir --author x` reads later words as paths (argparse standard).
+
 - Round 13 (tests): tried to break the CLI (empty, binary-heavy and 200 KB-subject commits, unicode, three
   timezones, case-different emails, four parallel runs, bad/odd paths, `--ai` with no/bad key, unwritable
   outputs). Found no bugs; added a regression test. A path starting with `-` works as `./-name`.
