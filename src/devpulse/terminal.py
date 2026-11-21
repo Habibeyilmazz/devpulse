@@ -36,7 +36,9 @@ def spark(values: list[int]) -> str:
 
 def print_report(r: Report, console: Console) -> None:
     p = r.period
-    console.print(f"\n[bold]devpulse[/bold] · {p.kind}ly review · [bold]{p.title}[/bold] [dim]({p.span})[/dim]\n")
+    head = f"devpulse · {p.kind}ly review · {p.title}"
+    gap = " " if len(head) + len(p.span) + 3 <= console.width else "\n"  # the dates go below rather than split
+    console.print(f"\n[bold]devpulse[/bold] · {p.kind}ly review · [bold]{p.title}[/bold]{gap}[dim]({p.span})[/dim]\n")
     if not r.commits:
         who = f" by {escape(', '.join(r.authors))}" if r.authors else ""
         repos = "1 repo" if r.repos_scanned == 1 else f"{r.repos_scanned} repos"

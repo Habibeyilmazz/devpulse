@@ -153,6 +153,14 @@ def test_terminal_report_uses_one_column_in_a_narrow_terminal():
         assert all(value in text for _, value in facts(r))  # nothing wrapped mid-value
 
 
+def test_terminal_header_never_wraps_inside_the_dates():
+    r = report()
+    for width in (40, 60, 200):
+        out = io.StringIO()
+        print_report(r, Console(file=out, width=width))
+        assert f"({r.period.span})" in out.getvalue()
+
+
 def test_terminal_report_without_commits():
     out = io.StringIO()
     print_report(build_report([], period_for("week", MON), MON, repos_scanned=1), Console(file=out, width=100))
