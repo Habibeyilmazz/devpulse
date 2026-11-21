@@ -328,8 +328,11 @@ def _empty(r: Report) -> str:
     """Nothing to chart: say what was searched and what to try next."""
     kind = r.period.kind
     who = esc(", ".join(r.authors)) if r.authors else "you"
+    # --last counts back from today, so a past period (from --date) names the earlier one by date
+    current = r.period.start <= r.today <= r.period.end
+    earlier = "--last" if current else f"--date {r.period.previous().start.isoformat()}"
     tries = [
-        (f"devpulse {kind} --last", f"The {kind} before this one."),
+        (f"devpulse {kind} {earlier}", f"The {kind} before this one."),
         (f'devpulse {kind} --author "Your Name"', "If you commit under another name or email."),
         (f"devpulse {kind} --depth 5", "If your repos sit more than three folders below the path you gave."),
     ]

@@ -109,6 +109,8 @@ def test_dashboard_renders_every_period_kind_and_the_empty_case():
     page = dashboard.render(empty, MON)
     assert "No commits in this period" in page and "4 repos" in page and "in this week (9 Mar – 15 Mar 2026)" in page
     assert "devpulse week --last" in page and 'class="figure"' not in page  # what to try next, and no big zero
+    past = dashboard.render(build_report([], period_for("week", MON), date(2026, 5, 1), repos_scanned=4), MON)
+    assert "devpulse week --date 2026-03-02" in past and "--last" not in past  # --last would count back from today
 
 
 def test_dashboard_for_a_quiet_period_still_shows_the_trend_and_the_searched_identity():
