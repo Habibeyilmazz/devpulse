@@ -89,7 +89,7 @@ def main() -> None:
     for name, commits in per_repo.items():
         write_repo(args.folder / name, REPOS[name][1], commits, rng)
         print(f"{name}: {len(commits)} commits")
-    print(f"\nNow run: devpulse week {args.folder} --open")
+    print(f'\nNow run: devpulse week "{args.folder}" --open')
 
 
 if __name__ == "__main__":
