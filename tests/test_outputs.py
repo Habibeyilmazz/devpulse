@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import io
 import re
 from datetime import date
@@ -128,3 +130,12 @@ def test_standup_labels_the_last_active_day():
     assert "Last active day (Fri 6 Mar)" in text
     assert text.count("api: Ship [v2]") == 1
     assert "No commits yet." in text
+
+
+def test_dashboard_policy_allows_only_its_own_script_and_no_requests():
+    page = dashboard.render(report(), date(2026, 3, 20))
+    policy = re.search(r'<meta http-equiv="Content-Security-Policy" content="([^"]+)">', page).group(1)
+    assert "default-src 'none'" in policy and "unsafe-inline" not in policy.split("script-src")[1]
+    script = re.search(r"<script>(.*?)</script>", page, re.S).group(1)
+    digest = base64.b64encode(hashlib.sha256(script.encode()).digest()).decode()
+    assert f"script-src 'sha256-{digest}'" in policy  # a changed script without a new hash would stop working

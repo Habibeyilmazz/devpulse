@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import base64
 import calendar
+import hashlib
 import math
 from datetime import date, timedelta
 from html import escape as esc
@@ -129,6 +131,13 @@ tip.style.transform='translate('+x+'px,'+y+'px)'}
 addEventListener('pointermove',show);addEventListener('pointerdown',show);
 addEventListener('scroll',()=>{tip.hidden=true},true);
 """
+
+# The browser enforces what the footer promises: no requests, and no script but the one above,
+# even if some text were ever left unescaped.
+CSP = (
+    "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; "
+    f"script-src 'sha256-{base64.b64encode(hashlib.sha256(JS.encode()).digest()).decode()}'"
+)
 
 
 def plural(n: int, word: str) -> str:
@@ -402,6 +411,7 @@ def render(r: Report, generated: date) -> str:
         ]
     return (
         '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
+        f'<meta http-equiv="Content-Security-Policy" content="{CSP}">'
         '<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark">'
         f'<meta name="robots" content="noindex"><title>devpulse · {esc(title)}</title><style>{CSS}</style></head>\n'
         f'<body><main><header><p class="eyebrow"><b>devpulse</b>{kind}ly review</p><h1>{esc(heading)}</h1>'
