@@ -68,43 +68,42 @@ $ devpulse week ~/code
 
 devpulse · weekly review · Week 47, 2026 (16 Nov – 22 Nov 2026)
 
-Commits            36              Focus time (est.)    15h 42m (9 sessions)
-Active days        5 of 7          Longest session      5h 00m (Fri 20 Nov)
-Lines changed      +2,278 / −460   Biggest day          Fri 20 Nov (12 commits)
-Projects           2               Peak hour            11:00
-vs previous week   +24% (so far)   Late-night commits   6% (22:00–05:00)
-Longest streak     5 days          Weekend commits      0%
-Current streak     5 days          Top language         TypeScript (43% of changed lines)
+Commits            28              Focus time (est.)    14h 24m (8 sessions)
+Active days        5 of 7          Longest session      4h 19m (Mon 16 Nov)
+Lines changed      +1,745 / −322   Biggest day          Mon 16 Nov (11 commits)
+Projects           3               Peak hour            10:00
+vs previous week   −18%            Late-night commits   0% (22:00–05:00)
+Longest streak     2 days          Weekend commits      18%
+Current streak     1 day           Top language         TypeScript (67% of changed lines)
 
-Hours 00–23           ▃▃█▃▁▂ ▁▄▃▁▁▄▁▁
-Per day      ▄▇▁▄█
+Hours 00–23  ········▅▆█▆▂·▂▃▂▅▂·▃▂··
+Per day      █▁·▄▃·▄
 
 Project     Commits          Lines  Latest
-ledger-api       18  +1,076 / −237  Speed up invoice totals
-ledger-web       18  +1,202 / −223  Document date picker
+ledger-web       21  +1,479 / −276  Fix empty states
+ledger-api        6     +253 / −46  Refactor webhook retries
+notes-cli         1       +13 / −0  Simplify config file
 
-Languages by changed lines  TypeScript 43%, Python 36%, Markdown 12%, CSS 9%
+Languages by changed lines  TypeScript 67%, CSS 18%, Python 12%, Markdown 3%, Go 1%
 ```
 
 ```
 $ devpulse standup ~/code
-Yesterday (Thu 19 Nov)
-  - ledger-api: Test webhook retries
-  - ledger-api: Simplify webhook retries
-  - ledger-web: Add empty states
-  - ledger-web: Refactor empty states
-  - ledger-web: Polish empty states
-  - ledger-web: Test keyboard shortcuts
-
-Today (Fri 20 Nov)
-  - ledger-api: Speed up CSV export
+Last active day (Fri 20 Nov)
   - ledger-api: Add CSV export
+  - ledger-api: Speed up invoice totals
+  - ledger-api: Simplify account import
+  - ledger-api: Refactor webhook retries
+
+Today (Sun 22 Nov)
+  - notes-cli: Simplify config file
+  - ledger-web: Test dark theme
   ...
 ```
 
-The review above is how a terminal of 100 columns or more shows it; a narrower one lists the same numbers in a single column.
+The review above is how a terminal of 100 columns or more shows it; a narrower one lists the same numbers in a single column. In the two sparklines a dot is an hour or a day without commits.
 
-If you did not commit yesterday, the first block is titled "Last active day" and shows the most recent day you did, up to a week back. So on a Monday after a free weekend you get Friday.
+The first block is titled "Yesterday" when you committed yesterday. Otherwise it is "Last active day" and shows the most recent day you did, up to a week back. So on a Monday after a free weekend you get Friday.
 
 ### As an Obsidian note
 
@@ -117,12 +116,12 @@ type: "weekly-review"
 period: "2026-W47"
 start: "2026-11-16"
 end: "2026-11-22"
-commits: 36
+commits: 28
 active_days: 5
-lines_added: 2278
-lines_deleted: 460
-focus_minutes: 942
-projects: ["ledger-api", "ledger-web"]
+lines_added: 1745
+lines_deleted: 322
+focus_minutes: 864
+projects: ["ledger-web", "ledger-api", "notes-cli"]
 tags: ["devpulse", "weekly-review"]
 ---
 
@@ -132,18 +131,18 @@ tags: ["devpulse", "weekly-review"]
 
 ## Highlights
 
-- **Commits:** 36
+- **Commits:** 28
 - **Active days:** 5 of 7
   ...
 
 ## Projects
 
-### [[ledger-api]]
+### [[ledger-web]]
 
-18 commits · +1,076 / −237
+21 commits · +1,479 / −276
 
-- Speed up invoice totals
-- Fix invoice totals
+- Fix empty states
+- Refactor dark theme
   ...
 ```
 
@@ -151,9 +150,18 @@ Each project is a wikilink, so the note joins whatever project pages you already
 
 ### As a dashboard
 
-One HTML file with inline CSS and about ten lines of script for hover tooltips. It follows your light or dark system theme, works on a phone, and can be mailed or archived as is.
+One HTML file with inline CSS and about ten lines of script for hover tooltips. It follows your light or dark system theme and can be mailed, printed or archived as is.
 
-![Year recap in dark mode: 1,474 commits, busiest month, top project, biggest day, rhythm, and a calendar heatmap of the year](docs/screenshots/year-dark.png)
+![Year recap in dark mode: 1,333 commits, busiest month, top project, biggest day, rhythm, and a calendar heatmap of the year](docs/screenshots/year-dark.png)
+
+On a phone the same file is one column, and the year calendar splits into two half-year grids instead of scrolling sideways:
+
+<p>
+  <img src="docs/screenshots/phone-year.png" width="300" alt="Year recap on a phone in light mode: the headline number, the tiles in two columns, the recap lines and the calendar as two stacked half-year grids">
+  <img src="docs/screenshots/phone-week-dark.png" width="300" alt="Weekly dashboard on a phone in dark mode: 28 commits, the tiles, the weekday-by-hour heatmap and commits per day">
+</p>
+
+The charts are not the only way in: every chart has a text description for screen readers, the commits per day are also a table, the project lists open with the keyboard, and the colours survive print and Windows high-contrast mode. A period without commits gets a page that says what was searched and what to try next.
 
 ## What it measures
 

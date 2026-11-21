@@ -39,14 +39,17 @@ code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow
 .hero{display:flex;flex-wrap:wrap;gap:20px 48px;align-items:center;margin-top:20px;padding:24px 0 8px;border-top:2px solid var(--ink)}
 .figure{font-size:clamp(64px,11vw,96px);font-weight:650;line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .figure small{display:block;font-size:15px;line-height:1.4;font-weight:400;letter-spacing:0;color:var(--ink2);margin-top:12px}
-.tiles{flex:1 1 420px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;margin:0}
+.tiles{flex:1 1 560px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;margin:0}
 .tiles div{border-top:1px solid var(--grid);padding-top:8px}
 @media (min-width:700px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .tiles dt{font-size:12.5px;color:var(--ink2)}
 .tiles dd{margin:0;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .tiles small{display:block;font-size:12.5px;font-weight:400;color:var(--ink2)}
 .tiles div:nth-child(-n+4) small{display:inline;margin-left:4px}
-.wrapped{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px 28px;margin:0}
+.wrapped{display:grid;gap:20px 28px;margin:0}
+/* 1, 2 or 4 across: never three with the fourth alone on a row */
+@media (min-width:560px){.wrapped{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:980px){.wrapped{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .wrapped dt{font-size:12.5px;color:var(--ink2)}
 .wrapped dd{margin:2px 0 0;font-size:clamp(22px,3vw,28px);font-weight:650;letter-spacing:-.02em;line-height:1.15}
 .wrapped small{display:block;margin-top:4px;font-size:13px;font-weight:400;letter-spacing:0;color:var(--ink2)}

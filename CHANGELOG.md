@@ -6,8 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Changes from a first-run review: a fresh clone, the README followed to the letter (pipx, uvx, the
-demo, the development setup), and a read of the whole codebase.
+Changes from two passes. A first-run review: a fresh clone, the README followed to the letter (pipx,
+uvx, the demo, the development setup), and a read of the whole codebase. Then a design pass: every
+output looked at as rendered (dashboard at 320 to 1440 pixels, light, dark, forced colours and print;
+terminal at 80 and 120 columns), with synthetic repos for the awkward cases (one commit, no commits,
+eleven projects, a repo name and a commit subject that do not fit).
 
 ### Fixed
 
@@ -21,13 +24,42 @@ demo, the development setup), and a read of the whole codebase.
   "Lines changed" and the language shares. Renames are now detected (`git log -M`).
 - The demo script's "Now run" hint did not quote a folder with spaces.
 - Ctrl-C printed a traceback.
+- `devpulse week --html out | head -3` (or quitting a pager early) ended the run before the note and
+  the dashboard were written. The files are now written before the report is printed.
+- A `.git` file that points nowhere (the leftover of a removed work tree) stopped the whole run with
+  "git has no user.email or user.name configured". Such a folder is now skipped and named as "not a
+  readable git repository".
+- A period with fewer commits than the one before was shown with a hyphen (`-18%`) next to the real
+  minus sign of "Lines changed". Both are `−` now.
+- "vs previous week" read `no baseline (so far)` in a period that is still running.
+- On a phone the heatmap rows were as tall as their labels, not their squares, which left wide gaps
+  between rows. The year calendar had the same fault once it stopped scrolling sideways.
 
 ### Changed
 
 - The headline numbers are listed in one column when the terminal is narrower than 100 columns
   (two columns wrapped nearly every value at the default 80).
 - "No commits found" names the identity that was searched, for example
-  `No commits by ada@example.com found in 4 repo(s)`.
+  `No commits by ada@example.com found in 4 repos`.
+- Dashboard layout: the commit count and its tiles sit on the page under a rule instead of inside a
+  card, and drop below the number on a tablet instead of squeezing beside it. The year calendar is
+  two half-year grids that sit side by side on a wide screen and stack on a phone (it used to be one
+  strip that scrolled sideways). Focus sessions are a list that reflows, not a five-column table.
+  The recap card shows one, two or four items per row, never three and an orphan.
+- Dashboard for a period without commits: says how many repos were read and for whom, lists three
+  commands to try (`--last`, `--author`, `--depth`), and shows the trend chart when earlier periods
+  have commits. No big zero.
+- Dashboard contrast: the grey bars of earlier periods are 3:1 against the card, the first step of
+  the dark heatmap ramp can be told from an empty cell, and small grey labels pass 4.5:1 in light mode.
+- Dashboard for assistive technology: charts of up to twelve bars read their values out, the heatmap
+  names the busiest weekday and hour, the scrolling per-day table can be focused, and the charts keep
+  their colours in Windows high-contrast mode and in print.
+- Terminal sparklines mark an hour or day without commits with a dot, so the bars keep their place:
+  `········▅▆█▆▂·▂▃▂▅▂·▃▂··` instead of blanks.
+- A malformed `--date` says `'22.11.2026' is not a date; write it as YYYY-MM-DD` instead of
+  argparse's "invalid fromisoformat value".
+- README screenshots retaken from the current dashboard, with two phone shots added, and the terminal
+  and Markdown samples replaced with current output.
 
 ### Added
 
@@ -69,12 +101,18 @@ First release.
   live API: no key was available. `--ai` is deliberately opt-in per run; a key in the environment
   alone never triggers an upload.
 - Known limits: history is bounded with `git log --since` (commit date, see README "How it works");
-  a commit subject containing the byte 0x1E is cut at that byte; a `.git` file that points nowhere
-  (a stale work tree) is reported as "no git identity configured" rather than as broken.
+  a commit subject containing the byte 0x1E is cut at that byte.
 - Windows is covered by CI only (tests plus a piped run); nobody has used it there interactively.
 - The config file and exclude patterns are still roadmap items, not built.
 - The dashboard charts are plain HTML and CSS. Colours are a single-hue sequential ramp; text never
-  carries the data colour.
+  carries the data colour. There is no animation, so there is nothing for reduced-motion to switch off.
+- The dashboard was checked by eye and with Playwright scripts (overflow at ten widths, Tab order,
+  hover tooltip, forced colours, print media). It has not been run through axe or Lighthouse, and not
+  through a real screen reader. Hover tooltips on single heatmap cells have no keyboard equivalent; the
+  per-day numbers are in the table at the bottom, the per-hour numbers are not available as text.
+- The README screenshots are cut from reports of `scripts/demo_repos.py` output with Playwright
+  (1040 px wide for the desktop shots, 390 px for the phone shots, both at 2x). Retake them when the
+  dashboard changes.
 
 [Unreleased]: https://github.com/Habibeyilmazz/devpulse/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/Habibeyilmazz/devpulse/releases/tag/v0.1.0
