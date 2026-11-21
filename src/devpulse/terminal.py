@@ -98,7 +98,7 @@ def print_standup(today: date, previous: list[Commit], current: list[Commit], co
     if current:
         _bullets(f"Today ({fmt_day(today)})", current, console)
     else:
-        console.print("[bold]Today[/bold]\n  [dim]No commits yet.[/dim]")
+        console.print(f"[bold]Today ({fmt_day(today)})[/bold]\n  [dim]No commits yet.[/dim]")
 
 
 def _bullets(title: str, commits: list[Commit], console: Console) -> None:

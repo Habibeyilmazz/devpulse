@@ -171,7 +171,7 @@ def test_standup_labels_the_last_active_day():
     text = out.getvalue()
     assert "Last active day (Fri 6 Mar)" in text
     assert text.count("api: Ship [v2]") == 1
-    assert "No commits yet." in text
+    assert "Today (Mon 9 Mar)\n  No commits yet." in text  # dated like the day above it
 
 
 def test_dashboard_policy_allows_only_its_own_script_and_no_requests():

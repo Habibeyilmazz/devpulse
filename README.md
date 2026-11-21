@@ -70,23 +70,22 @@ $ devpulse week ~/code
 
 devpulse · weekly review · Week 47, 2026 (16 Nov – 22 Nov 2026)
 
-Commits            28              Focus time (est.)    14h 24m (8 sessions)
-Active days        5 of 7          Longest session      4h 19m (Mon 16 Nov)
-Lines changed      +1,745 / −322   Biggest day          Mon 16 Nov (11 commits)
-Projects           3               Peak hour            10:00
-vs previous week   −18%            Late-night commits   0% (22:00–05:00)
-Longest streak     2 days          Weekend commits      18%
-Current streak     1 day           Top language         TypeScript (67% of changed lines)
+Commits            36              Focus time (est.)    15h 42m (9 sessions)
+Active days        5 of 7          Longest session      5h 00m (Fri 20 Nov)
+Lines changed      +2,278 / −460   Biggest day          Fri 20 Nov (12 commits)
+Projects           2               Peak hour            11:00
+vs previous week   +24%            Late-night commits   6% (22:00–05:00)
+Longest streak     5 days          Weekend commits      0%
+Current streak     0 days          Top language         TypeScript (43% of changed lines)
 
-Hours 00–23  ········▅▆█▆▂·▂▃▂▅▂·▃▂··
-Per day      █▁·▄▃·▄
+Hours 00–23  ·········▃▃█▃▁▂·▁▄▃▁▁▄▁▁
+Per day      ▄▇▁▄█··
 
 Project     Commits          Lines  Latest
-ledger-web       21  +1,479 / −276  Fix empty states
-ledger-api        6     +253 / −46  Refactor webhook retries
-notes-cli         1       +13 / −0  Simplify config file
+ledger-api       18  +1,076 / −237  Speed up invoice totals
+ledger-web       18  +1,202 / −223  Document date picker
 
-Languages by changed lines  TypeScript 67%, CSS 18%, Python 12%, Markdown 3%, Go 1%
+Languages by changed lines  TypeScript 43%, Python 36%, Markdown 12%, CSS 9%
 ```
 
 ```
@@ -154,13 +153,13 @@ Each project is a wikilink, so the note joins whatever project pages you already
 
 One HTML file with inline CSS and about ten lines of script for hover tooltips. It follows your light or dark system theme and can be mailed, printed or archived as is.
 
-![Year recap in dark mode: 1,333 commits, busiest month, top project, biggest day, rhythm, and a calendar heatmap of the year](docs/screenshots/year-dark.png)
+![Year recap in dark mode: 1,474 commits, busiest month, top project, biggest day, rhythm, and a calendar heatmap of the year with the days still to come outlined](docs/screenshots/year-dark.png)
 
 On a phone the same file is one column, and the year calendar splits into two half-year grids instead of scrolling sideways:
 
 <p>
   <img src="docs/screenshots/phone-year.png" width="300" alt="Year recap on a phone in light mode: the headline number, the tiles in two columns, the recap lines and the calendar as two stacked half-year grids">
-  <img src="docs/screenshots/phone-week-dark.png" width="300" alt="Weekly dashboard on a phone in dark mode: 28 commits, the tiles, the weekday-by-hour heatmap and commits per day">
+  <img src="docs/screenshots/phone-week-dark.png" width="300" alt="Weekly dashboard on a phone in dark mode: 36 commits, the tiles, the weekday-by-hour heatmap and commits per day">
 </p>
 
 The charts are not the only way in: every chart has a text description for screen readers, commits per day and the whole weekday-by-hour heatmap are also tables, the project lists open with the keyboard, and the colours survive print and Windows high-contrast mode. A period without commits gets a page that says what was searched and what to try next.
