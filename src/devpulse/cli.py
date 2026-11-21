@@ -40,6 +40,7 @@ def collect(
     commits: dict[str, Commit] = {}
     unknown, broken = [], []
     matched: dict[str, None] = {}  # an ordered set
+
     def read(repo: Path) -> tuple[list[str], list[Commit]]:
         who = authors or [a for a in [configured_author(repo)] if a]
         return who, read_commits(repo, names[repo], who, since) if who else []
