@@ -275,7 +275,7 @@ def render(r: Report, generated: date) -> str:
     stats = "".join(
         f"<div><dt>{esc(k)}</dt><dd>{esc(v)}{f' <small>{esc(detail)}</small>' if detail else ''}</dd></div>"
         for k, v, detail in tiles(r)
-        if k not in ("Commits", "Biggest day")
+        if k not in ("Commits", "Biggest day", "Busiest month", "Your rhythm")  # the last two have their own card
     )
     hero = (
         f'<section class="card hero"><div class="figure">{len(r.commits):,}<small>{"commit" if len(r.commits) == 1 else "commits"}'

@@ -335,6 +335,9 @@ def tiles(r: Report) -> list[tuple[str, str, str]]:
     if r.languages:
         lang, n = r.languages[0]
         out.append(("Top language", lang, f"{n / sum(v for _, v in r.languages):.0%} of changed lines"))
+    if r.commits and r.period.kind == "year":  # the recap lines
+        month, n = max(r.columns, key=lambda col: col[1])
+        out += [("Busiest month", month, f"{n:,} commits"), ("Your rhythm", *r.persona)]
     return out
 
 

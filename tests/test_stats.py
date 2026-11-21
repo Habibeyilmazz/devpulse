@@ -169,6 +169,9 @@ def test_month_and_year_columns():
     year = build_report(commits, period_for("year", MON), today=date(2026, 12, 31), repos_scanned=1)
     assert year.columns[2] == ("Mar", 3) and year.columns[6] == ("Jul", 1) and len(year.columns) == 12
     assert len(year.per_day) == 365
+    recap = dict(facts(year))
+    assert recap["Busiest month"] == "Mar (3 commits)" and recap["Your rhythm"].startswith("Weekend warrior (50%")
+    assert "Busiest month" not in dict(facts(month))
 
 
 def test_empty_report_has_safe_defaults():
