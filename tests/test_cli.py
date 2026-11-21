@@ -206,7 +206,8 @@ def test_escape_sequences_in_subjects_and_folder_names_never_reach_the_terminal(
     evil = "Fix \x1b]0;pwned\x07 \x1b[2J \x1b]8;;https://example.invalid\x1b\\link\x1b]8;;\x1b\\ \x1b]52;c;cm0gLXJm\x07 ‮ok \x9b31m"
     root = tmp_path / "code"
     make_repo(root / "api", [("2026-03-09T09:15:00+01:00", evil, {"app.py": lines(3)})])
-    make_repo(root / "web\x1b[31m", [("2026-03-09T10:15:00+01:00", "Plain", {"a.py": lines(3)})])
+    folder = "web" if os.name == "nt" else "web\x1b[31m"  # Windows cannot create such a folder
+    make_repo(root / folder, [("2026-03-09T10:15:00+01:00", "Plain", {"a.py": lines(3)})])
 
     for argv in (
         ["week", str(root), "--date", "2026-03-10", "--md", str(tmp_path / "o")],
