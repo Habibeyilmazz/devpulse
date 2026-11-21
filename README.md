@@ -224,6 +224,19 @@ With uvx, add `--with anthropic` before `--from`.
 
 This path has been run through the real SDK against a local stub server, not yet against the live API.
 
+## Compared with other tools
+
+devpulse answers one question: what did I ship, and when, from the repos on my disk. It is not a team product.
+
+| Tool | Use it instead when |
+| --- | --- |
+| [git-standup](https://github.com/kamranahmedse/git-standup) | You only want a quick list of yesterday's commits. `devpulse standup` covers that too, but is a bigger install. |
+| [WakaTime](https://wakatime.com) | You want measured editor time per file and language. devpulse infers focus from commit gaps and never sees your editor. |
+| [GitHub Insights / Contribution graph](https://docs.github.com/en/account-and-profile) | You want a view across hosted repos and teammates. devpulse reads only local clones, for one author. |
+| [git-quick-stats](https://github.com/git-quick-stats/git-quick-stats) | You want many ad-hoc statistics of one repo in an interactive menu. devpulse has no menu; it makes a weekly note and dashboard across many repos. |
+
+What devpulse adds is the Markdown note for Obsidian and the self-contained dashboard across a whole folder of repos. What it does not do: track time, see uncommitted work, read remotes or serve a team.
+
 ## Roadmap
 
 Not built yet:
@@ -232,6 +245,10 @@ Not built yet:
 - Counting commits on remote-tracking branches
 - Publishing to PyPI
 - `--no-wikilinks` for plain Markdown
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Bugs and ideas go in [issues](https://github.com/Habibeyilmazz/devpulse/issues).
 
 ## Development
 

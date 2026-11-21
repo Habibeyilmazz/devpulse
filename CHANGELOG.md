@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Launch pass (round 6): CONTRIBUTING.md, issue templates, a README comparison with alternatives
+  and a Contributing section. Checked the reported gaps: heatmap cells still have no keyboard focus
+  (the hour table carries the same totals) and same-second identical empty commits still count once;
+  both left as documented limits. Playwright e2e not added.
 - Config file (round 4, feature): `~/.config/devpulse/config.toml` (or `$XDG_CONFIG_HOME/devpulse/`, or
   the file `DEVPULSE_CONFIG` names) sets defaults for `path`, `authors`, `exclude`, `depth`, `md` and
   `html`, so the weekly run is a bare `devpulse week`. Flags win over the file; `--exclude` adds to it.
