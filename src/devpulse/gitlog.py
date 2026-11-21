@@ -157,7 +157,7 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
         "--format=%x1e%H%x1f%aI%x1f%s",
     )  # fmt: skip
     if proc.returncode != 0:
-        print(f"devpulse: skipping {repo}: {printable(proc.stderr.strip()[:200])}", file=sys.stderr)
+        print(f"devpulse: skipping {printable(str(repo))}: {printable(proc.stderr.strip()[:200])}", file=sys.stderr)
         return []
     commits: dict[tuple, Commit] = {}
     for record in proc.stdout.split("\x1e")[1:]:

@@ -1,5 +1,8 @@
 import os
+import subprocess
 from datetime import date
+
+import pytest
 
 from conftest import ADA, BOB, commit, git, lines, make_repo
 from devpulse import gitlog
@@ -208,3 +211,17 @@ def test_an_empty_or_enormous_subject_is_readable_in_every_output(tmp_path):
     assert "(no message)" in subjects
     assert max(map(len, subjects)) <= gitlog.MAX_SUBJECT
     assert any(s.endswith("…") for s in subjects)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows cannot create such a folder")
+def test_a_skipped_repo_is_named_without_its_escape_sequences(tmp_path, capsys):
+    # A folder name is as untrusted as a commit subject; the "skipping" warning printed it raw.
+    repo = make_repo(tmp_path / "x\x1b]0;pwned\x07y", [("2026-03-09T10:00:00+00:00", "Add", {"a.py": lines(1)})])
+    sha = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    obj = repo / ".git" / "objects" / sha[:2] / sha[2:]
+    obj.chmod(0o644)
+    obj.write_bytes(b"junk")  # git log now fails on this repo
+
+    assert read_commits(repo, "x", [ADA[1]], SINCE) == []
+    err = capsys.readouterr().err
+    assert "skipping" in err and "\x1b" not in err and "\x07" not in err, repr(err)
