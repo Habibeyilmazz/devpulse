@@ -101,7 +101,9 @@ def test_dashboard_renders_every_period_kind_and_the_empty_case():
         page = dashboard.render(report(kind, today=date(2026, 12, 31)), date(2026, 12, 31))
         assert f"{kind}ly review" in page
         assert page.count('class="cal"') == (2 if kind == "year" else 0)  # the year as two half-year grids
+    assert 'class="later"' not in page  # the year is over: no day is still to come
     year = dashboard.render(report("year"), MON)
+    assert year.count('class="later"') == (date(2026, 12, 31) - date(2026, 3, 20)).days and "still to come" in year
     assert "Your 2026 in code" in year and "Busiest month" in year and "Your rhythm" in year
     empty = build_report([], period_for("week", MON), MON, repos_scanned=4)
     page = dashboard.render(empty, MON)

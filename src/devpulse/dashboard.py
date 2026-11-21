@@ -69,6 +69,7 @@ code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow
 .cals{display:flex;flex-direction:column;gap:14px}
 .cal{display:grid;grid-template-rows:auto repeat(7,minmax(0,1fr));grid-template-columns:2rem;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px}
 .cal i.out{background:none}
+.cal i.later{background:none;box-shadow:inset 0 0 0 1px var(--grid)}
 .cal span{display:flex;align-items:center;min-height:16px}
 .cal span:nth-last-child(8){justify-content:flex-end}
 @media (min-width:820px){.cals{display:grid;grid-template-rows:auto repeat(7,minmax(0,1fr));grid-template-columns:2rem;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px}
@@ -181,7 +182,9 @@ def _calendar(r: Report) -> str:
         firsts = [d for d in week if d.day == 1 and d in r.per_day]
         cells = [f"<span>{calendar.month_abbr[firsts[0].month]}</span>" if firsts else "<span></span>"]
         for d in week:
-            if d in r.per_day:
+            if d > r.today and d in r.per_day:  # still to come: an outline, not an empty day
+                cells.append('<i class="later"></i>')
+            elif d in r.per_day:
                 n = r.per_day[d]
                 tip = f"{d:%a} {d.day} {d:%b} · {plural(n, 'commit')}"
                 cells.append(f'<i class="q{level(n, top)}" data-tip="{esc(tip)}"></i>')
@@ -371,7 +374,15 @@ def render(r: Report, generated: date) -> str:
     else:
         if kind == "year":
             cards.append(f'<section class="card">{_wrapped(r)}</section>')
-            cards.append(_card("", f"{title}, day by day", "One square per day, one column per week.", _calendar(r)))
+            cards.append(
+                _card(
+                    "",
+                    f"{title}, day by day",
+                    "One square per day, one column per week."
+                    + (" Outlined squares are days still to come." if r.in_progress else ""),
+                    _calendar(r),
+                )
+            )
         cards += [
             _card("w7", "When you commit", "Commits by weekday and hour, in each commit's own time zone.", _heat(r)),
             _card(
