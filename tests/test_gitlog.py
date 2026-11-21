@@ -1,0 +1,134 @@
+from datetime import date
+
+from conftest import ADA, BOB, commit, git, lines, make_repo
+from devpulse.gitlog import configured_author, find_repos, is_ignored, read_commits, repo_names
+
+SINCE = date(2026, 1, 1)
+
+
+def test_find_repos_prunes_and_limits_depth(tmp_path):
+    for rel in ["a/.git", "group/b/.git", "group/b/sub/.git", "x/y/z/w/.git", "node_modules/pkg/.git", ".cache/c/.git"]:
+        (tmp_path / rel).mkdir(parents=True)
+    (tmp_path / "worktree").mkdir()
+    (tmp_path / "worktree" / ".git").write_text("gitdir: elsewhere\n")
+
+    found = [p.relative_to(tmp_path.resolve()).as_posix() for p in find_repos(tmp_path, depth=3)]
+
+    assert found == ["a", "group/b", "worktree"]
+    assert [p.name for p in find_repos(tmp_path, depth=4)] == ["a", "b", "worktree", "w"]
+
+
+def test_find_repos_accepts_a_repo_as_root(tmp_path):
+    (tmp_path / ".git").mkdir()
+    assert find_repos(tmp_path) == [tmp_path.resolve()]
+
+
+def test_repo_names_disambiguate_duplicates(tmp_path):
+    root = tmp_path.resolve()
+    repos = [root / "work" / "api", root / "home" / "api", root / "web"]
+    assert list(repo_names(tmp_path, repos).values()) == ["work/api", "home/api", "web"]
+
+
+def test_is_ignored():
+    assert is_ignored("package-lock.json")
+    assert is_ignored("web/yarn.lock")
+    assert is_ignored("static/app.min.js")
+    assert is_ignored("vendor/lib/thing.go")
+    assert not is_ignored("src/build_tools.py")
+    assert not is_ignored("docs/vendor.md")
+
+
+def test_read_commits_filters_author_and_counts_lines(tmp_path):
+    repo = make_repo(
+        tmp_path / "api",
+        [
+            ("2026-03-09T10:00:00+01:00", "Add app", {"app.py": lines(10), "package-lock.json": lines(500)}),
+            ("2026-03-09T11:00:00+01:00", "Bob's change", {"bob.py": lines(99)}, BOB),
+            (
+                "2026-03-10T23:30:00-05:00",
+                "[wip] trim app & add logo",
+                {"app.py": lines(4), "logo.png": b"\x00\x01\x02\xff"},
+            ),
+        ],
+    )
+
+    commits = sorted(read_commits(repo, "api", ["ada@example.com"], SINCE), key=lambda c: c.when)
+
+    assert [c.subject for c in commits] == ["Add app", "[wip] trim app & add logo"]
+    assert commits[0].files == (("app.py", 10, 0),)  # the lock file is left out
+    assert (commits[1].added, commits[1].deleted) == (0, 6)
+    assert ("logo.png", 0, 0) in commits[1].files  # binary: no line counts
+    # hour and day are the author's local ones, whatever time zone the report runs in
+    assert (commits[1].when.hour, commits[1].day) == (23, date(2026, 3, 10))
+    assert commits[0].repo == "api" and len(commits[0].sha) == 40
+
+
+def test_author_match_is_a_case_insensitive_fixed_substring(tmp_path):
+    plus = ("Ada Example", "1234+ada.x@users.noreply.example.com")
+    repo = make_repo(
+        tmp_path / "r",
+        [
+            ("2026-03-09T10:00:00+00:00", "one", {"a.txt": "1\n"}, plus),
+            ("2026-03-09T11:00:00+00:00", "two", {"a.txt": "2\n"}, ("Adax", "1234+adaXx@users.noreply.example.com")),
+        ],
+    )
+    assert [c.subject for c in read_commits(repo, "r", ["1234+ADA.x@users"], SINCE)] == ["one"]
+    assert len(read_commits(repo, "r", ["ada example", "adax"], SINCE)) == 2
+    assert read_commits(repo, "r", ["nobody"], SINCE) == []
+
+
+def test_since_cuts_off_older_commits(tmp_path):
+    repo = make_repo(
+        tmp_path / "r",
+        [
+            ("2025-12-31T23:59:00+00:00", "old", {"a.txt": "1\n"}),
+            ("2026-01-01T00:01:00+00:00", "new", {"a.txt": "2\n"}),
+        ],
+    )
+    assert [c.subject for c in read_commits(repo, "r", [ADA[1]], SINCE)] == ["new"]
+
+
+def test_side_branches_count_but_cherry_picks_count_once(tmp_path):
+    repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "base", {"a.txt": "1\n"})])
+    git(repo, "checkout", "-q", "-b", "feature")
+    commit(repo, "2026-03-09T11:00:00+00:00", "feature work", {"f.txt": "1\n"})
+    git(repo, "checkout", "-q", "main")
+    git(repo, "cherry-pick", "feature", env={"GIT_COMMITTER_NAME": ADA[0], "GIT_COMMITTER_EMAIL": ADA[1]})
+    commit(repo, "2026-03-09T12:00:00+00:00", "main work", {"m.txt": "1\n"})
+
+    subjects = sorted(c.subject for c in read_commits(repo, "r", [ADA[1]], SINCE))
+
+    assert subjects == ["base", "feature work", "main work"]
+
+
+def test_merge_commits_are_skipped(tmp_path):
+    repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "base", {"a.txt": "1\n"})])
+    git(repo, "checkout", "-q", "-b", "side")
+    commit(repo, "2026-03-09T11:00:00+00:00", "side", {"s.txt": "1\n"})
+    git(repo, "checkout", "-q", "main")
+    commit(repo, "2026-03-09T12:00:00+00:00", "main", {"m.txt": "1\n"})
+    env = {
+        "GIT_COMMITTER_NAME": ADA[0],
+        "GIT_COMMITTER_EMAIL": ADA[1],
+        "GIT_AUTHOR_NAME": ADA[0],
+        "GIT_AUTHOR_EMAIL": ADA[1],
+    }
+    git(repo, "merge", "-q", "--no-ff", "-m", "Merge side", "side", env=env)
+
+    assert sorted(c.subject for c in read_commits(repo, "r", [ADA[1]], SINCE)) == ["base", "main", "side"]
+
+
+def test_empty_repo_and_unicode_paths(tmp_path, capsys):
+    empty = make_repo(tmp_path / "empty")
+    assert read_commits(empty, "empty", [ADA[1]], SINCE) == []
+    assert capsys.readouterr().err == ""
+
+    repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "Añade café ☕", {"docs/café notes.md": lines(3)})])
+    (only,) = read_commits(repo, "r", [ADA[1]], SINCE)
+    assert only.subject == "Añade café ☕"
+    assert only.files == (("docs/café notes.md", 3, 0),)
+
+
+def test_configured_author(tmp_path):
+    assert configured_author(make_repo(tmp_path / "a")) == ADA[1]
+    assert configured_author(make_repo(tmp_path / "b", identity=None)) is None
