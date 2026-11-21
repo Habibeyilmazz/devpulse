@@ -6,6 +6,32 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+Second security pass (round 11). Re-read every module and the workflow, probed the CLI with hostile
+folder names and paths, scanned the git history, and ran `pip-audit --strict` locally on everything
+installed (runtime, `[ai]` and dev): no known vulnerabilities. Fixed, each with a test that fails
+without the fix:
+
+- The "skipping REPO: ..." warning for a repo git cannot read printed the repo's full path raw, so a
+  folder name holding escape sequences (say, inside an unpacked archive) reached the terminal. Round 3
+  cleaned the short repo names but missed this one path; it now goes through `printable` too.
+- The "Markdown note / HTML dashboard / JSON data" lines passed the output path to rich as markup:
+  `--md "notes/[red]x[/red]"` printed `notes/x/...`, a file that does not exist, and a `[link=...]` in
+  a path became a terminal hyperlink. The path is now escaped.
+- CI pins `build` and `pip-audit` to exact versions (the actions were already pinned to commits).
+
+Checked and left: the dashboard (every interpolation escaped, CSP with `default-src 'none'`), the
+note (frontmatter is JSON-quoted, wikilinks cleaned), git hardening from round 3, workflow
+permissions (`contents: read`, `persist-credentials: false`, no `pull_request_target`), no secrets or
+personal addresses in the history. Not fixed: a `.git` file whose `gitdir:` names a UNC path would make
+git on Windows open that share (untested; git itself does the same in a git-aware shell prompt).
+
+### Fixed
+
+- The terminal header split its dates over two lines under 64 columns (gap reported in round 10);
+  the dates now move to their own line when the header does not fit.
+
 ### Changed
 
 - Design pass (round 10). Looked at the terminal (piped and on a tty, 60/80/100 columns) and the
