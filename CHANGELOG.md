@@ -32,6 +32,7 @@ All notable changes to this project are documented here. The format follows
   landmarks, every chart an `img` with a text alternative, zero text under WCAG AA contrast (4.5:1 / 3:1
   large). Unused code: ruff finds none; `rich` is the only runtime dependency. Added the README screenshot
   of the quarter dashboard (the round 15 gap). Still unverified: pipx/uvx, Obsidian, live `--ai`.
+  A 2000-day, 8,776-commit history: `devpulse year` took 6 s (git-bound).
   `scripts/demo_repos.py` is slow for very long histories (`--days 2000` took over two minutes); a
   development script only, left alone.
 
