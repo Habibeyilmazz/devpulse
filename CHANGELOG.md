@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Config file (round 4, feature): `~/.config/devpulse/config.toml` (or `$XDG_CONFIG_HOME/devpulse/`, or
+  the file `DEVPULSE_CONFIG` names) sets defaults for `path`, `authors`, `exclude`, `depth`, `md` and
+  `html`, so the weekly run is a bare `devpulse week`. Flags win over the file; `--exclude` adds to it.
+  Relative paths are relative to the file. Unknown keys, wrong types and broken TOML stop the run with
+  the file and key named. Python 3.10 reads it with `tomli`, the only new dependency (3.11+ use `tomllib`).
+- `--exclude GLOB` (repeatable): skip folders whose name or path below `PATH` matches, with everything
+  inside them. Matching is case-sensitive on every platform; `*` also crosses `/`.
+
 ### Security
 
 A security pass over the whole repo (round 3). Findings fixed, each with a regression test:
@@ -128,7 +138,8 @@ First release.
 - Known limits: history is bounded with `git log --since` (commit date, see README "How it works");
   a commit subject containing the byte 0x1E is cut at that byte.
 - Windows is covered by CI only (tests plus a piped run); nobody has used it there interactively.
-- The config file and exclude patterns are still roadmap items, not built.
+- Config lives in `config.py` (lookup and validation) and `cli.apply_config` (merging with flags).
+  The tests isolate `HOME`, `USERPROFILE`, `XDG_CONFIG_HOME` and `DEVPULSE_CONFIG`.
 - The dashboard charts are plain HTML and CSS. Colours are a single-hue sequential ramp; text never
   carries the data colour. There is no animation, so there is nothing for reduced-motion to switch off.
 - The dashboard was checked by eye and with Playwright scripts (overflow at ten widths, Tab order,

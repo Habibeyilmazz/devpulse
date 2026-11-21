@@ -22,7 +22,7 @@ Or run it once without installing:
 uvx --from git+https://github.com/Habibeyilmazz/devpulse devpulse week ~/code --open
 ```
 
-`~/code` is whatever folder contains your repositories. devpulse finds every repo below it and counts the commits made with each repo's configured `user.email`. There is no config file.
+`~/code` is whatever folder contains your repositories. devpulse finds every repo below it and counts the commits made with each repo's configured `user.email`. Nothing needs configuring; to make a weekly run a bare `devpulse week`, see [Config file](#config-file-optional).
 
 To try it without pointing it at real work:
 
@@ -58,6 +58,7 @@ Options for every command:
 | `--author NAME_OR_EMAIL` | Count commits whose author contains this text instead of the repo's `user.email`. Repeat it if you commit under several identities |
 | `--date YYYY-MM-DD` | Report on the week, month or year that contains this day. For `standup`, the day to treat as today |
 | `--depth N` | How many folder levels below `PATH` to search for repos (default 3) |
+| `--exclude GLOB` | Skip every folder below `PATH` whose name or relative path matches, with all it contains: `forks`, `forks/*`, `client-*`. Case-sensitive. Repeat it for more patterns |
 
 Files are named after the period: `devpulse-2026-W47.md`, `devpulse-2026-11.html`, `devpulse-2026.html`.
 
@@ -163,6 +164,23 @@ On a phone the same file is one column, and the year calendar splits into two ha
 
 The charts are not the only way in: every chart has a text description for screen readers, commits per day and per hour are also tables, the project lists open with the keyboard, and the colours survive print and Windows high-contrast mode. A period without commits gets a page that says what was searched and what to try next.
 
+## Config file (optional)
+
+Put the flags you would type every week in `~/.config/devpulse/config.toml` (or `$XDG_CONFIG_HOME/devpulse/config.toml`; set `DEVPULSE_CONFIG` to use another file). The same place is used on Windows, below your user folder. `devpulse --help` prints the path it looks at.
+
+```toml
+path = "~/code"                               # default PATH
+authors = ["ada@example.com", "ada@work.example"]  # like --author, repeated
+exclude = ["forks", "client-*"]               # like --exclude
+depth = 3
+md = "~/vault/Reviews"                        # write the note on every week, month and year run
+html = "~/Reports/devpulse"                   # and the dashboard
+```
+
+Every key is optional. With this file, `devpulse week` from any folder reviews `~/code`, leaves out the forks and client repos, and files the note in the vault.
+
+A flag on the command line wins over the file: `devpulse week ~/other --author bob@` ignores `path` and `authors`. `--exclude` is the exception: it adds to the file's patterns. A relative path in the file is relative to the file's folder. An unknown key, a wrong type or broken TOML stops the run with a message that names the file and the key.
+
 ## What it measures
 
 - **Commits, active days, lines changed, projects** for the period, with the change against the previous period.
@@ -210,8 +228,6 @@ This path has been run through the real SDK against a local stub server, not yet
 
 Not built yet:
 
-- A config file for default path, authors and output folders
-- Excluding repos or paths by pattern
 - Options for the session gap and the late-night window
 - Counting commits on remote-tracking branches
 - Publishing to PyPI

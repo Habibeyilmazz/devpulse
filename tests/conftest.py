@@ -15,12 +15,13 @@ BOB = ("Bob Sample", "bob@example.com")
 
 @pytest.fixture(autouse=True)
 def isolated_git(monkeypatch, tmp_path):
-    """Keep git away from the real user and system config, and make sure no API key leaks in."""
+    """Keep git and devpulse away from the real user and system config, and make sure no API key leaks in."""
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # what Path.home() reads on Windows
     monkeypatch.setenv("COLUMNS", "200")
-    for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "DEVPULSE_MODEL"):
+    for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "DEVPULSE_MODEL", "DEVPULSE_CONFIG", "XDG_CONFIG_HOME"):
         monkeypatch.delenv(var, raising=False)
 
 

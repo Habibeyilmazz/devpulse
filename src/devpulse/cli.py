@@ -12,7 +12,7 @@ from pathlib import Path
 
 from rich.console import Console
 
-from devpulse import __version__, ai, dashboard, note
+from devpulse import __version__, ai, config, dashboard, note
 from devpulse.gitlog import Commit, configured_author, enclosing_repo, find_repos, read_commits, repo_names
 from devpulse.stats import build_report, period_for, window_start
 from devpulse.terminal import print_report, print_standup
@@ -22,16 +22,19 @@ class UsageError(Exception):
     pass
 
 
-def collect(root: Path, authors: list[str], depth: int, since: date) -> tuple[list[Commit], int, list[str]]:
+def collect(
+    root: Path, authors: list[str], depth: int, since: date, exclude: list[str] = ()
+) -> tuple[list[Commit], int, list[str]]:
     """Commits since `since` from every repo under `root`, the number of repos read, and the identities matched."""
     root = root.expanduser()  # cmd.exe and PowerShell pass ~ through, and so does a quoted "~/code"
     if not root.is_dir():
         raise UsageError(f"not a folder: {root}")
-    repos = find_repos(root, depth)
+    repos = find_repos(root, depth, exclude)
     if not repos and (inside := enclosing_repo(root)):
         repos = [inside]  # PATH is a subfolder of a single repo
     if not repos:
-        raise UsageError(f"no git repositories found within {depth} levels of {root} (see --depth)")
+        hint = "--depth, --exclude" if exclude else "--depth"
+        raise UsageError(f"no git repositories found within {depth} levels of {root} (see {hint})")
     names = repo_names(root, repos)
     commits: dict[str, Commit] = {}
     unknown, broken = [], []
@@ -70,7 +73,7 @@ def run_review(args: argparse.Namespace, console: Console) -> int:
     period = period_for(args.command, args.date or today)
     if args.last:
         period = period.previous()
-    commits, n_repos, authors = collect(args.path, args.author, args.depth, window_start(period))
+    commits, n_repos, authors = collect(args.path, args.author, args.depth, window_start(period), args.exclude)
     report = build_report(commits, period, today, n_repos)
     report.authors = authors
 
@@ -102,7 +105,7 @@ def run_review(args: argparse.Namespace, console: Console) -> int:
 
 def run_standup(args: argparse.Namespace, console: Console) -> int:
     today = args.date or date.today()
-    commits, _, _ = collect(args.path, args.author, args.depth, today - timedelta(days=7))
+    commits, _, _ = collect(args.path, args.author, args.depth, today - timedelta(days=7), args.exclude)
     earlier = [c for c in commits if c.day < today]
     last_day = max((c.day for c in earlier), default=None)
     print_standup(
@@ -125,15 +128,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="devpulse",
         description="Your personal engineering review, generated from local git history. Nothing is uploaded.",
+        epilog=f"Defaults for PATH, --author, --exclude, --depth, --md and --html can be set in {config.config_path()}",
     )
     parser.add_argument("--version", action="version", version=f"devpulse {__version__}")
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument(
-        "path", nargs="?", type=Path, default=Path("."), help="folder that contains your repos (default: .)"
+        "path", nargs="?", type=Path, help="folder that contains your repos (default: `path` from the config, else .)"
     )
     common.add_argument(
         "--author", action="append", default=[], metavar="NAME_OR_EMAIL",
         help="count commits whose author contains this text; repeatable (default: each repo's git user.email)",
+    )  # fmt: skip
+    common.add_argument(
+        "--exclude", action="append", default=[], metavar="GLOB",
+        help="skip folders whose name or path below PATH matches this glob, e.g. 'forks/*'; repeatable",
     )  # fmt: skip
     common.add_argument(
         "--date",
@@ -141,9 +149,7 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="YYYY-MM-DD",
         help="report on the week, month, year or standup day that contains this day (default: today)",
     )
-    common.add_argument(
-        "--depth", type=int, default=3, help="how many folder levels below PATH to search for repos (default: 3)"
-    )
+    common.add_argument("--depth", type=int, help="how many folder levels below PATH to search for repos (default: 3)")
 
     sub = parser.add_subparsers(dest="command", required=True, metavar="{week,month,year,standup}")
     helps = {
@@ -182,8 +188,24 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def apply_config(args: argparse.Namespace, settings: dict) -> None:
+    """Fill what the command line left out from the config file. --exclude adds to the config's list."""
+    args.path = args.path or settings.get("path", Path("."))
+    args.author = args.author or settings.get("authors", [])
+    args.exclude = settings.get("exclude", []) + args.exclude
+    args.depth = settings.get("depth", 3) if args.depth is None else args.depth
+    if args.command != "standup":
+        args.md = args.md or settings.get("md")
+        args.html = args.html or settings.get("html")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    try:
+        apply_config(args, config.load())
+    except config.ConfigError as e:
+        print(f"devpulse: config: {e}", file=sys.stderr)
+        return 2
     for stream in (sys.stdout, sys.stderr):
         # A pipe on Windows (Git Bash, `> file`) gets the legacy code page, which has no sparkline blocks.
         if hasattr(stream, "reconfigure") and "utf" not in (stream.encoding or "").lower():
