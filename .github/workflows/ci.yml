@@ -14,11 +14,15 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.10", "3.12", "3.13"]
+        include:
+          - os: windows-latest
+            python-version: "3.12"
     steps:
       - uses: actions/checkout@v5
         with:
@@ -35,6 +39,12 @@ jobs:
           ruff format --check .
       - name: Test
         run: pytest -q
+      - name: Run it through a pipe
+        shell: bash  # Git Bash on Windows: stdout is a pipe with the legacy code page
+        run: |
+          python scripts/demo_repos.py "$RUNNER_TEMP/demo" --days 30
+          devpulse week "$RUNNER_TEMP/demo" --md "$RUNNER_TEMP/out" --html "$RUNNER_TEMP/out" | cat
+          devpulse standup "$RUNNER_TEMP/demo" | cat
 
   build:
     runs-on: ubuntu-latest
