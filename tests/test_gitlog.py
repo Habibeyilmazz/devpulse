@@ -169,3 +169,13 @@ def test_git_is_run_without_lazy_fetch_or_prompts(tmp_path, monkeypatch):
 def test_configured_author(tmp_path):
     assert configured_author(make_repo(tmp_path / "a")) == ADA[1]
     assert configured_author(make_repo(tmp_path / "b", identity=None)) is None
+
+
+def test_a_moved_file_counts_only_the_lines_edited_in_it(tmp_path):
+    repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "Add", {"old/app.py": lines(200), "b.txt": "1\n"})])
+    git(repo, "mv", "old", "new")
+    commit(repo, "2026-03-09T11:00:00+00:00", "Move", {"new/app.py": lines(200) + "one more\n", "b.txt": "2\n"})
+
+    move = max(read_commits(repo, "r", [ADA[1]], SINCE), key=lambda c: c.when)
+
+    assert sorted(move.files) == [("b.txt", 1, 1), ("new/app.py", 1, 0)]

@@ -17,6 +17,8 @@ demo, the development setup), and a read of the whole codebase.
   reported as "not a folder".
 - Output piped through a legacy code page (Git Bash or `> file` on Windows) crashed on the
   sparkline characters. Such a pipe now gets UTF-8.
+- Moving or renaming a file counted every line in it as deleted and added again, which inflated
+  "Lines changed" and the language shares. Renames are now detected (`git log -M`).
 - The demo script's "Now run" hint did not quote a folder with spaces.
 - Ctrl-C printed a traceback.
 

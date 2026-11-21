@@ -173,7 +173,7 @@ Details worth knowing:
 
 - Only commits on local branches (and `HEAD`) are read. Merge commits are skipped. A commit that exists twice because it was cherry-picked or rebased is counted once, and so is one that shows up in several linked work trees or clones of the same repo.
 - If `PATH` holds no repos but is itself inside one, that repo is used. So plain `devpulse week` works from anywhere in a project.
-- Lock files, minified files and vendored or build folders are left out of line counts, since they are not lines you wrote.
+- Lock files, minified files and vendored or build folders are left out of line counts, since they are not lines you wrote. A moved or renamed file counts for the lines edited in it, not as a whole file deleted and added.
 - History is read back as far as the trend needs (8 weeks, 6 months or 3 years). A current streak that reaches that edge is shown with a plus sign, for example `56+ days`.
 - A week that is not over is compared with the full previous week and marked "so far".
 - `git log` runs with external diff drivers, text converters, signature checks, credential prompts and lazy fetching switched off, which closes the usual ways a repository's own config can make git start other programs or reach the network. (Switching off lazy fetching in partial clones needs git 2.44 or newer.)

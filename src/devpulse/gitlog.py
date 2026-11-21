@@ -113,7 +113,8 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
     """
     proc = _git(
         # --ignore-missing: HEAD does not resolve in an empty repo or on a fresh orphan branch
-        repo, "log", "--ignore-missing", "--branches", "HEAD", "--no-merges", "--no-renames",
+        # -M: a moved file counts for the lines edited in it, not as a whole file deleted and added
+        repo, "log", "--ignore-missing", "--branches", "HEAD", "--no-merges", "-M",
         # never run helper programs that a repo's own config could name (diff drivers, gpg)
         "--no-ext-diff", "--no-textconv", "--no-show-signature", "--numstat", "-z", "-F", "-i",
         *(f"--author={a}" for a in authors),
@@ -140,10 +141,16 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
         if when.date() < since:
             continue
         files = []
-        for entry in body.split("\0"):
+        entries = iter(body.split("\0"))
+        for entry in entries:
             parts = entry.lstrip("\n").split("\t", 2)
-            if len(parts) == 3 and not is_ignored(parts[2]):
-                added, deleted, path = parts
+            if len(parts) != 3:
+                continue
+            added, deleted, path = parts
+            if not path:  # a rename: -z writes the counts, then the old path and the new one as separate fields
+                next(entries, None)
+                path = next(entries, "")
+            if not is_ignored(path):
                 # binary files report "-" for both counts
                 files.append((path, int(added) if added.isdigit() else 0, int(deleted) if deleted.isdigit() else 0))
         # A cherry-pick or rebase keeps author date, subject and the change: count the work once.
