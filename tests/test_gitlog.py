@@ -1,6 +1,7 @@
 from datetime import date
 
 from conftest import ADA, BOB, commit, git, lines, make_repo
+from devpulse import gitlog
 from devpulse.gitlog import configured_author, find_repos, is_ignored, read_commits, repo_names
 
 SINCE = date(2026, 1, 1)
@@ -14,8 +15,8 @@ def test_find_repos_prunes_and_limits_depth(tmp_path):
 
     found = [p.relative_to(tmp_path.resolve()).as_posix() for p in find_repos(tmp_path, depth=3)]
 
-    assert found == ["a", "group/b", "worktree"]
-    assert [p.name for p in find_repos(tmp_path, depth=4)] == ["a", "b", "worktree", "w"]
+    assert found == ["a", "group/b", "group/b/sub", "worktree"]  # nested repos count too
+    assert [p.name for p in find_repos(tmp_path, depth=4)] == ["a", "b", "sub", "worktree", "w"]
 
 
 def test_find_repos_accepts_a_repo_as_root(tmp_path):
@@ -100,6 +101,11 @@ def test_side_branches_count_but_cherry_picks_count_once(tmp_path):
 
     assert subjects == ["base", "feature work", "main work"]
 
+    # same second and subject but a different change: two commits, not one
+    for name in ("x.txt", "y.txt"):
+        commit(repo, "2026-03-09T13:00:00+00:00", "Update", {name: "1\n"})
+    assert sum(c.subject == "Update" for c in read_commits(repo, "r", [ADA[1]], SINCE)) == 2
+
 
 def test_merge_commits_are_skipped(tmp_path):
     repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "base", {"a.txt": "1\n"})])
@@ -123,10 +129,14 @@ def test_empty_repo_and_unicode_paths(tmp_path, capsys):
     assert read_commits(empty, "empty", [ADA[1]], SINCE) == []
     assert capsys.readouterr().err == ""
 
-    repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "Añade café ☕", {"docs/café notes.md": lines(3)})])
-    (only,) = read_commits(repo, "r", [ADA[1]], SINCE)
-    assert only.subject == "Añade café ☕"
-    assert only.files == (("docs/café notes.md", 3, 0),)
+    odd = 'ta\tb "quoted".py'  # git would quote and escape this path without -z
+    files = {"docs/café notes.md": lines(3), f"src/{odd}": lines(2), f"vendor/{odd}": lines(9)}
+    repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "Añade café ☕", files)])
+    commit(repo, "2026-03-09T11:00:00+00:00", "nothing changed", {})
+    first, second = sorted(read_commits(repo, "r", [ADA[1]], SINCE), key=lambda c: c.when)
+    assert first.subject == "Añade café ☕"
+    assert first.files == (("docs/café notes.md", 3, 0), (f"src/{odd}", 2, 0))
+    assert (second.subject, second.files) == ("nothing changed", ())
 
 
 def test_separator_bytes_in_a_subject_do_not_crash_the_parser(tmp_path):
@@ -138,6 +148,20 @@ def test_separator_bytes_in_a_subject_do_not_crash_the_parser(tmp_path):
         ],
     )
     assert "fine" in [c.subject for c in read_commits(repo, "r", [ADA[1]], SINCE)]
+
+
+def test_orphan_branch_does_not_hide_the_other_branches(tmp_path):
+    repo = make_repo(tmp_path / "r", [("2026-03-09T10:00:00+00:00", "on main", {"a.txt": "1\n"})])
+    git(repo, "switch", "-q", "--orphan", "scratch")
+    assert [c.subject for c in read_commits(repo, "r", [ADA[1]], SINCE)] == ["on main"]
+
+
+def test_git_is_run_without_lazy_fetch_or_prompts(tmp_path, monkeypatch):
+    seen = {}
+    real_run = gitlog.subprocess.run
+    monkeypatch.setattr(gitlog.subprocess, "run", lambda *a, **kw: seen.update(kw["env"]) or real_run(*a, **kw))
+    read_commits(make_repo(tmp_path / "r"), "r", [ADA[1]], SINCE)
+    assert (seen["GIT_NO_LAZY_FETCH"], seen["GIT_TERMINAL_PROMPT"]) == ("1", "0")
 
 
 def test_configured_author(tmp_path):

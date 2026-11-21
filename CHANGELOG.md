@@ -24,6 +24,10 @@ First release.
   `year` dashboard adds a recap card and a day-by-day calendar.
 - `devpulse standup`: bullets for the last active day and today.
 - `--author`, `--date`, `--last`, `--depth`.
+- Commits are counted once across cherry-picks, linked work trees and second clones. A `PATH`
+  inside a repo reports on that repo.
+- git is run read-only with diff drivers, text converters, signature checks, prompts and lazy
+  fetching switched off.
 - `--ai`: optional narrative and "one thing for next week" from the Anthropic API. Opt-in per run;
   needs the `anthropic` package (`devpulse[ai]`) and credentials.
 - `scripts/demo_repos.py`: generates synthetic repositories to try the tool on.
@@ -36,6 +40,8 @@ First release.
   `cli.py` (argparse wiring). All headline numbers come from `stats.tiles()`.
 - Tests must only read repositories they create (`tests/conftest.py` isolates git config and HOME).
 - The `--ai` path is tested with a fake client only. It has not been run against the live API.
+- Known limits: history is bounded with `git log --since` (commit date, see README "How it works");
+  a commit subject containing the byte 0x1E is cut at that byte; Windows is untested.
 - The dashboard charts are plain HTML and CSS. Colours are a single-hue sequential ramp; text never
   carries the data colour.
 

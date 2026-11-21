@@ -1,6 +1,7 @@
 """Find git repositories under a folder and read commits from them.
 
-Read-only: the only git commands run are `git log`, `git rev-parse` and `git config --get`.
+Read-only: the only git commands run are `git log`, `git rev-parse` and `git config --get`,
+with lazy fetching and prompts switched off.
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-SKIP_DIRS = {"node_modules", "venv", "__pycache__", "vendor", "target", "dist", "build"}
+SKIP_DIRS = {"node_modules", "venv", "site-packages", "__pycache__"}  # big, and never where you keep repos
 
 # Generated or vendored files would drown real work in the line counts.
 IGNORED_NAMES = {
@@ -50,15 +51,16 @@ def is_ignored(path: str) -> bool:
 
 
 def find_repos(root: Path, depth: int = 3) -> list[Path]:
-    """Return every git work tree at most `depth` folders below `root` (root itself is level 0)."""
+    """Return every git work tree at most `depth` folders below `root` (root itself is level 0).
+
+    The walk continues inside a repo, so nested repos and submodules are found too.
+    """
     root = Path(root).expanduser().resolve()
     repos: list[Path] = []
     for dirpath, dirnames, filenames in os.walk(root):  # does not follow symlinks
         # `.git` is a file in linked work trees and submodules
         if ".git" in dirnames or ".git" in filenames:
             repos.append(Path(dirpath))
-            dirnames[:] = []
-            continue
         if len(Path(dirpath).relative_to(root).parts) >= depth:
             dirnames[:] = []
         else:
@@ -77,12 +79,14 @@ def repo_names(root: Path, repos: list[Path]) -> dict[Path, str]:
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["git", "-C", str(repo), "-c", "core.quotepath=off", *args],
+        ["git", "-C", str(repo), *args],
         capture_output=True,
         text=True,
         encoding="utf-8",
         errors="replace",
-        env={**os.environ, "LC_ALL": "C"},
+        # A partial clone would otherwise fetch missing blobs for --numstat: network access, and
+        # whatever ssh command the repo's config names. (GIT_NO_LAZY_FETCH needs git 2.44+.)
+        env={**os.environ, "LC_ALL": "C", "GIT_NO_LAZY_FETCH": "1", "GIT_TERMINAL_PROMPT": "0"},
         check=False,
     )
 
@@ -107,12 +111,11 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
 
     `authors` are matched as case-insensitive substrings of "Name <email>".
     """
-    if _git(repo, "rev-parse", "--quiet", "--verify", "HEAD").returncode != 0:
-        return []  # a repo without commits
     proc = _git(
-        repo, "log", "--branches", "HEAD", "--no-merges", "--no-renames",
+        # --ignore-missing: HEAD does not resolve in an empty repo or on a fresh orphan branch
+        repo, "log", "--ignore-missing", "--branches", "HEAD", "--no-merges", "--no-renames",
         # never run helper programs that a repo's own config could name (diff drivers, gpg)
-        "--no-ext-diff", "--no-textconv", "--no-show-signature", "--numstat", "-F", "-i",
+        "--no-ext-diff", "--no-textconv", "--no-show-signature", "--numstat", "-z", "-F", "-i",
         *(f"--author={a}" for a in authors),
         # --since tests the committer date, which is never earlier than the author date we
         # filter on below; two days of slack covers time zones.
@@ -122,9 +125,9 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
     if proc.returncode != 0:
         print(f"devpulse: skipping {repo}: {proc.stderr.strip()[:200]}", file=sys.stderr)
         return []
-    commits: dict[tuple[datetime, str], Commit] = {}
+    commits: dict[tuple, Commit] = {}
     for record in proc.stdout.split("\x1e")[1:]:
-        head, _, body = record.partition("\n")
+        head, _, body = record.partition("\0")  # -z: NUL-terminated fields, paths verbatim
         fields = head.split("\x1f", 2)
         if len(fields) != 3:
             continue
@@ -137,12 +140,12 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
         if when.date() < since:
             continue
         files = []
-        for line in body.splitlines():
-            parts = line.split("\t", 2)
+        for entry in body.split("\0"):
+            parts = entry.lstrip("\n").split("\t", 2)
             if len(parts) == 3 and not is_ignored(parts[2]):
                 added, deleted, path = parts
                 # binary files report "-" for both counts
                 files.append((path, int(added) if added.isdigit() else 0, int(deleted) if deleted.isdigit() else 0))
-        # A cherry-pick or rebase keeps author date and subject: count the work once.
-        commits.setdefault((when, subject), Commit(name, sha, when, subject, tuple(files)))
+        # A cherry-pick or rebase keeps author date, subject and the change: count the work once.
+        commits.setdefault((when, subject, *files), Commit(name, sha, when, subject, tuple(files)))
     return list(commits.values())

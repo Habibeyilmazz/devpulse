@@ -165,7 +165,7 @@ One HTML file with inline CSS and about ten lines of script for hover tooltips. 
 
 ## How it works
 
-devpulse walks `PATH` for folders that contain `.git` (skipping hidden folders, `node_modules`, `vendor` and the like), then runs one read-only `git log --numstat` per repository and does the arithmetic in Python. It never writes to a repository.
+devpulse walks `PATH` for folders that contain `.git` (skipping hidden folders, `node_modules` and virtualenvs; nested repos and submodules are found too), then runs one read-only `git log --numstat` per repository and does the arithmetic in Python. It never writes to a repository.
 
 Details worth knowing:
 
@@ -174,11 +174,12 @@ Details worth knowing:
 - Lock files, minified files and vendored or build folders are left out of line counts, since they are not lines you wrote.
 - History is read back as far as the trend needs (8 weeks, 6 months or 3 years). A current streak that reaches that edge is shown with a plus sign, for example `56+ days`.
 - A week that is not over is compared with the full previous week and marked "so far".
-- `git log` is told not to run external diff drivers, text converters or signature checks, so a repository's own config cannot make devpulse execute anything.
+- `git log` runs with external diff drivers, text converters, signature checks, credential prompts and lazy fetching switched off, which closes the usual ways a repository's own config can make git start other programs or reach the network. (Switching off lazy fetching in partial clones needs git 2.44 or newer.)
+- History is cut off with `git log --since`, which looks at the commit date. A commit whose commit date is far older than its author date can therefore be missed.
 
 ## Privacy
 
-Everything runs on your machine. The dashboard makes no network requests and embeds no fonts, scripts or trackers from elsewhere; a test enforces that. The only code path that touches the network is `--ai`, and only when you pass it.
+Everything runs on your machine, from the history that is already there: devpulse never fetches. The dashboard makes no network requests and embeds no fonts, scripts or trackers from elsewhere; a test enforces that. The only code path that touches the network is `--ai`, and only when you pass it.
 
 ## AI summary (optional)
 

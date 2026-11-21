@@ -92,8 +92,7 @@ def test_streaks():
     assert longest_streak(days) == 3
     assert longest_streak(set()) == 0
     assert streak_ending(days, d(6)) == 2
-    assert streak_ending(days, d(7)) == 2  # today is not over yet, the streak still stands
-    assert streak_ending(days, d(8)) == 0
+    assert streak_ending(days, d(7)) == 0
 
 
 def week_commits():
@@ -142,6 +141,13 @@ def test_current_streak_counts_back_from_today_across_the_period_start():
     assert r.current_streak == 3  # Sun 8, Mon 9, Tue 10
     assert not r.streak_capped
     assert dict(facts(r))["vs previous week"] == "+67% (so far)"
+
+
+def test_a_quiet_day_only_spares_the_streak_while_it_is_today():
+    commits = [c("2026-03-13 10:00"), c("2026-03-14 10:00")]  # Friday and Saturday; Sunday is quiet
+    period = period_for("week", MON)
+    assert build_report(commits, period, today=d(15), repos_scanned=1).current_streak == 2  # Sunday is not over
+    assert build_report(commits, period, today=d(16), repos_scanned=1).current_streak == 0  # it ended quiet
 
 
 def test_streak_is_flagged_when_it_reaches_the_edge_of_the_history_read():

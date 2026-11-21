@@ -131,9 +131,7 @@ def longest_streak(days: set[date]) -> int:
 
 
 def streak_ending(days: set[date], end: date) -> int:
-    """Consecutive active days up to `end`; a quiet `end` (the day is not over) does not break it."""
-    if end not in days:
-        end -= timedelta(days=1)
+    """Consecutive active days up to and including `end`."""
     n = 0
     while end - timedelta(days=n) in days:
         n += 1
@@ -256,8 +254,9 @@ def build_report(commits: list[Commit], period: Period, today: date, repos_scann
 
     first, as_of = window_start(period), min(period.end, today)
     history = {c.day for c in commits if first <= c.day <= as_of}
-    current = streak_ending(history, as_of)
-    streak_last = as_of if as_of in history else as_of - timedelta(days=1)
+    # Today is not over: a day without commits so far does not break the streak yet.
+    streak_last = as_of - timedelta(days=1) if as_of == today and as_of not in history else as_of
+    current = streak_ending(history, streak_last)
 
     trend, p = [], period
     for _ in range(TREND_PERIODS[period.kind]):
