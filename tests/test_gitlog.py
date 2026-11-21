@@ -129,6 +129,17 @@ def test_empty_repo_and_unicode_paths(tmp_path, capsys):
     assert only.files == (("docs/café notes.md", 3, 0),)
 
 
+def test_separator_bytes_in_a_subject_do_not_crash_the_parser(tmp_path):
+    repo = make_repo(
+        tmp_path / "r",
+        [
+            ("2026-03-09T10:00:00+00:00", "odd \x1eaaaa\x1fnot-a-date\x1fboom", {"a.txt": "1\n"}),
+            ("2026-03-09T11:00:00+00:00", "fine", {"a.txt": "2\n"}),
+        ],
+    )
+    assert "fine" in [c.subject for c in read_commits(repo, "r", [ADA[1]], SINCE)]
+
+
 def test_configured_author(tmp_path):
     assert configured_author(make_repo(tmp_path / "a")) == ADA[1]
     assert configured_author(make_repo(tmp_path / "b", identity=None)) is None

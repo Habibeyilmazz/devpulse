@@ -56,7 +56,7 @@ Options for every command:
 | Option | Effect |
 | --- | --- |
 | `--author NAME_OR_EMAIL` | Count commits whose author contains this text instead of the repo's `user.email`. Repeat it if you commit under several identities |
-| `--date YYYY-MM-DD` | Report on the period that contains this day instead of today |
+| `--date YYYY-MM-DD` | Report on the week, month or year that contains this day. For `standup`, the day to treat as today |
 | `--depth N` | How many folder levels below `PATH` to search for repos (default 3) |
 
 Files are named after the period: `devpulse-2026-W47.md`, `devpulse-2026-11.html`, `devpulse-2026.html`.
@@ -169,7 +169,8 @@ devpulse walks `PATH` for folders that contain `.git` (skipping hidden folders, 
 
 Details worth knowing:
 
-- Only commits on local branches (and `HEAD`) are read. Merge commits are skipped. A commit that exists twice because it was cherry-picked or rebased is counted once.
+- Only commits on local branches (and `HEAD`) are read. Merge commits are skipped. A commit that exists twice because it was cherry-picked or rebased is counted once, and so is one that shows up in several linked work trees or clones of the same repo.
+- If `PATH` holds no repos but is itself inside one, that repo is used. So plain `devpulse week` works from anywhere in a project.
 - Lock files, minified files and vendored or build folders are left out of line counts, since they are not lines you wrote.
 - History is read back as far as the trend needs (8 weeks, 6 months or 3 years). A current streak that reaches that edge is shown with a plus sign, for example `56+ days`.
 - A week that is not over is compared with the full previous week and marked "so far".

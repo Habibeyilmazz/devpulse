@@ -1,6 +1,6 @@
 """End-to-end runs of the CLI against synthetic repositories."""
 
-from conftest import BOB, lines, make_repo
+from conftest import ADA, BOB, git, lines, make_repo
 from devpulse import ai, cli
 
 
@@ -37,7 +37,7 @@ def test_week_writes_note_and_dashboard(tmp_path, capsys):
     assert "Bob's refactor" not in md and "Add health endpoint" not in md
     html = (out / "report.html").read_text(encoding="utf-8")
     assert "Dark mode &lt;toggle&gt;" in html and "Bob" not in html
-    assert "TypeScript" in html and "in progress" in html
+    assert "TypeScript" in html and "in progress" not in html  # --date picks the week; it is long over
 
 
 def test_last_month_year_and_explicit_author(tmp_path, capsys):
@@ -69,12 +69,33 @@ def test_standup(tmp_path, capsys):
     assert "Last active day (Fri 6 Mar)" in out and "Add health endpoint" in out
 
 
+def test_linked_work_trees_and_second_clones_do_not_double_count(tmp_path, capsys):
+    root = workspace(tmp_path)
+    git(root / "api", "worktree", "add", "-q", "-b", "feature", str(root / "api-feature"))
+    git(root, "clone", "-q", str(root / "api"), str(root / "api-copy"))
+    git(root / "api-copy", "config", "user.email", ADA[1])
+
+    assert cli.main(["week", str(root), "--date", "2026-03-10", "--md", str(tmp_path / "n.md")]) == 0
+    text = (tmp_path / "n.md").read_text(encoding="utf-8")
+    assert "commits: 4" in text and 'projects: ["api", "web"]' in text
+
+
+def test_path_inside_a_repo_reports_on_that_repo(tmp_path, capsys):
+    root = workspace(tmp_path)
+    (root / "api" / "docs").mkdir()
+
+    assert cli.main(["standup", str(root / "api" / "docs"), "--date", "2026-03-10"]) == 0
+    assert "api: Tidy README" in capsys.readouterr().out
+
+
 def test_usage_errors(tmp_path, capsys):
     (tmp_path / "plain").mkdir()
     assert cli.main(["week", str(tmp_path / "plain")]) == 2
     assert "no git repositories found" in capsys.readouterr().err
     assert cli.main(["week", str(tmp_path / "missing")]) == 2
     assert "not a folder" in capsys.readouterr().err
+    assert cli.main(["week", str(workspace(tmp_path / "w")), "--date", "0001-01-01"]) == 2
+    assert "out of range" in capsys.readouterr().err
     (tmp_path / "file.txt").write_text("not a folder")
     assert cli.main(["week", str(workspace(tmp_path)), "--md", str(tmp_path / "file.txt" / "notes")]) == 1
     assert "file.txt" in capsys.readouterr().err

@@ -87,6 +87,12 @@ def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def enclosing_repo(path: Path) -> Path | None:
+    """The work tree that `path` is inside, if any."""
+    top = _git(path, "rev-parse", "--show-toplevel")
+    return Path(top.stdout.strip()) if top.returncode == 0 and top.stdout.strip() else None
+
+
 def configured_author(repo: Path) -> str | None:
     """The email (or else name) git would commit with in this repo."""
     for key in ("user.email", "user.name"):
@@ -123,8 +129,11 @@ def read_commits(repo: Path, name: str, authors: list[str], since: date) -> list
         if len(fields) != 3:
             continue
         sha, when_text, subject = fields
-        # git writes UTC as "Z", which fromisoformat only accepts from Python 3.11
-        when = datetime.fromisoformat(when_text.replace("Z", "+00:00"))
+        try:
+            # git writes UTC as "Z", which fromisoformat only accepts from Python 3.11
+            when = datetime.fromisoformat(when_text.replace("Z", "+00:00"))
+        except ValueError:
+            continue  # a subject containing our separator bytes; not a record we wrote the format for
         if when.date() < since:
             continue
         files = []

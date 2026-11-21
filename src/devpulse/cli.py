@@ -13,7 +13,7 @@ from pathlib import Path
 from rich.console import Console
 
 from devpulse import __version__, ai, dashboard, note
-from devpulse.gitlog import Commit, configured_author, find_repos, read_commits, repo_names
+from devpulse.gitlog import Commit, configured_author, enclosing_repo, find_repos, read_commits, repo_names
 from devpulse.stats import build_report, period_for, window_start
 from devpulse.terminal import print_report, print_standup
 
@@ -27,22 +27,25 @@ def collect(root: Path, authors: list[str], depth: int, since: date) -> tuple[li
     if not root.is_dir():
         raise UsageError(f"not a folder: {root}")
     repos = find_repos(root, depth)
+    if not repos and (inside := enclosing_repo(root)):
+        repos = [inside]  # PATH is a subfolder of a single repo
     if not repos:
         raise UsageError(f"no git repositories found within {depth} levels of {root} (see --depth)")
     names = repo_names(root, repos)
-    commits: list[Commit] = []
+    commits: dict[str, Commit] = {}
     unknown = []
     for repo in repos:
         who = authors or [a for a in [configured_author(repo)] if a]
         if who:
-            commits += read_commits(repo, names[repo], who, since)
+            for c in read_commits(repo, names[repo], who, since):
+                commits.setdefault(c.sha, c)  # a linked work tree or second clone lists the same commits again
         else:
             unknown.append(names[repo])
     if len(unknown) == len(repos):
         raise UsageError("git has no user.email or user.name configured; pass --author NAME_OR_EMAIL")
     if unknown:
         print(f"devpulse: no git identity configured in: {', '.join(unknown)} (skipped)", file=sys.stderr)
-    return commits, len(repos) - len(unknown)
+    return list(commits.values()), len(repos) - len(unknown)
 
 
 def target(path: Path, stem: str, suffix: str) -> Path:
@@ -54,8 +57,8 @@ def target(path: Path, stem: str, suffix: str) -> Path:
 
 
 def run_review(args: argparse.Namespace, console: Console) -> int:
-    today = args.date or date.today()
-    period = period_for(args.command, today)
+    today = date.today()
+    period = period_for(args.command, args.date or today)
     if args.last:
         period = period.previous()
     commits, n_repos = collect(args.path, args.author, args.depth, window_start(period))
@@ -116,7 +119,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--date",
         type=date.fromisoformat,
         metavar="YYYY-MM-DD",
-        help="report on the period containing this day (default: today)",
+        help="report on the week, month, year or standup day that contains this day (default: today)",
     )
     common.add_argument(
         "--depth", type=int, default=3, help="how many folder levels below PATH to search for repos (default: 3)"
@@ -166,6 +169,9 @@ def main(argv: list[str] | None = None) -> int:
         return run_standup(args, console) if args.command == "standup" else run_review(args, console)
     except UsageError as e:
         print(f"devpulse: {e}", file=sys.stderr)
+        return 2
+    except OverflowError:
+        print("devpulse: --date is out of range", file=sys.stderr)
         return 2
     except BrokenPipeError:  # e.g. `devpulse standup | head -3`
         os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())  # keep the exit flush quiet
