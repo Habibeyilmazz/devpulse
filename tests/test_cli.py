@@ -180,3 +180,16 @@ def test_stale_git_pointer_is_named_as_broken_not_as_a_missing_identity(tmp_path
     assert cli.main(["week", str(only)]) == 2
     err = capsys.readouterr().err
     assert "no readable git repositories" in err and "identity" not in err
+
+
+def test_files_are_written_even_when_the_terminal_pipe_closes(tmp_path):
+    """`devpulse week --html out | head -3`: the reader goes away before the report is printed."""
+    out = tmp_path / "out"
+    cmd = [sys.executable, "-m", "devpulse", "week", str(workspace(tmp_path)), "--date", "2026-03-10"]
+    proc = subprocess.Popen(
+        [*cmd, "--md", str(out), "--html", str(out)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    proc.stdout.close()
+    proc.wait(timeout=60)
+    proc.stderr.close()
+    assert (out / "devpulse-2026-W11.md").exists() and (out / "devpulse-2026-W11.html").exists()

@@ -80,20 +80,23 @@ def run_review(args: argparse.Namespace, console: Console) -> int:
         except ai.AIUnavailable as e:
             print(f"devpulse: no AI summary: {e}", file=sys.stderr)
 
-    print_report(report, console)
-    stem = f"devpulse-{period.label}"
+    # Write the files before printing: `devpulse week --html out | head` closes the pipe mid-report.
+    stem, written = f"devpulse-{period.label}", []
     if args.md:
         file = target(args.md, stem, ".md")
         file.write_text(note.render(report), encoding="utf-8")
-        console.print(f"Markdown note  {file}", highlight=False, soft_wrap=True)
+        written.append(("Markdown note ", file))
     if args.open and not args.html:
         args.html = Path(tempfile.mkdtemp(prefix="devpulse-"))
     if args.html:
         file = target(args.html, stem, ".html")
         file.write_text(dashboard.render(report, date.today()), encoding="utf-8")
-        console.print(f"HTML dashboard {file}", highlight=False, soft_wrap=True)
+        written.append(("HTML dashboard", file))
         if args.open:
             webbrowser.open(file.resolve().as_uri())
+    print_report(report, console)
+    for label, file in written:
+        console.print(f"{label} {file}", highlight=False, soft_wrap=True)
     return 0
 
 
